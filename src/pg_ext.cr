@@ -18,7 +18,7 @@ end
 module PQ
   struct Param
     def self.encode(val : UUID)
-      encode Slice.new(16) { |i| val.to_unsafe[i] }
+      encode val.to_slice.clone
     end
   end
 end
