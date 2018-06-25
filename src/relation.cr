@@ -1,0 +1,139 @@
+module Rome
+  struct Relation(T)
+    protected def initialize(@builder : QueryBuilder)
+    end
+
+    def each(&block : T ->) : Nil
+      Rome.adapter_class.new(@builder).select_each do |rs|
+        record = T.new(rs)
+        record.new_record = false
+        yield record
+      end
+    end
+
+    def all : Array(T)
+      Rome.adapter_class.new(@builder).select_all do |rs|
+        record = T.new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
+    def find(id) : T
+      find?(id) || raise RecordNotFound.new
+    end
+
+    def find?(id) : T?
+      builder = @builder.where({ T.primary_key => id })
+
+      Rome.adapter_class.new(builder).select_one do |rs|
+        record = T.new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
+    def find_by(**args) : T
+      find_by?(**args) || raise RecordNotFound.new
+    end
+
+    def find_by?(**args) : T?
+      builder = @builder.where(**args).limit(1)
+
+      Rome.adapter_class.new(builder).select_one do |rs|
+        record = T.new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
+    def update(**attributes) : Nil
+      Rome.adapter_class.new(@builder).update(attributes)
+    end
+
+    def delete : Nil
+      Rome.adapter_class.new(@builder).delete
+    end
+
+    def select(*columns : Symbol) : self
+      self.class.new @builder.select(*columns)
+    end
+
+    def select!(*columns : Symbol) : self
+      @builder.select!(*columns)
+      self
+    end
+
+    def where(conditions : Hash | NamedTuple) : self
+      self.class.new @builder.where(conditions)
+    end
+
+    def where!(conditions : Hash | NamedTuple) : self
+      @builder.where!(conditions)
+      self
+    end
+
+    def where(**conditions) : self
+      self.class.new @builder.where(**conditions)
+    end
+
+    def where!(**conditions) : self
+      @builder.where!(**conditions)
+      self
+    end
+
+    def limit(value : Int32) : self
+      self.class.new @builder.limit(value)
+    end
+
+    def limit!(value : Int32) : self
+      @builder.limit!(value)
+      self
+    end
+
+    def offset(value : Int32) : self
+      self.class.new @builder.offset(value)
+    end
+
+    def offset!(value : Int32) : self
+      @builder.offset!(value)
+      self
+    end
+
+    def order(*columns : Symbol) : self
+      self.class.new @builder.order(*columns)
+    end
+
+    def order!(*columns : Symbol) : self
+      @builder.order!(*columns)
+      self
+    end
+
+    def order(**columns) : self
+      self.class.new @builder.order(**columns)
+    end
+
+    def order!(**columns) : self
+      @builder.order!(**columns)
+      self
+    end
+
+    def reorder(*columns : Symbol) : self
+      self.class.new @builder.reorder(*columns)
+    end
+
+    def reorder!(*columns : Symbol) : self
+      @builder.reorder!(*columns)
+      self
+    end
+
+    def reorder(**columns) : self
+      self.class.new @builder.reorder(**columns)
+    end
+
+    def reorder!(**columns) : self
+      @builder.reorder!(**columns)
+      self
+    end
+  end
+end

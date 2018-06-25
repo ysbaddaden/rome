@@ -1,0 +1,16 @@
+language: crystal
+
+services:
+  - postgresql
+  - mysql
+
+before_script:
+  - psql -c 'CREATE DATABASE rome_test;' -U postgres
+  - mysql -e "CREATE DATABASE rome_test;"
+
+env:
+  - DATABASE_URL=postgres://postgres@/rome_test
+  - DATABASE_URL=mysql://root@localhost/rome_test
+
+test:
+  - crystal run `find test -iname "*_test.cr"`

@@ -1,0 +1,23 @@
+name: rome
+version: 0.1.0
+
+authors:
+  - Julien Portalier <julien@portalier.com>
+
+description: |
+  Basic Database Object Mapper
+
+dependencies:
+  db:
+    github: crystal-lang/crystal-db
+    version: "~> 0.5"
+
+development_dependencies:
+  minitest:
+    github: ysbaddaden/minitest.cr
+  mysql:
+    github: crystal-lang/crystal-mysql
+  pg:
+    github: will/crystal-pg
+
+license: Apache-2.0
