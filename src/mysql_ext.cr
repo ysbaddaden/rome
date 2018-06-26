@@ -14,9 +14,17 @@ abstract struct MySql::Type
     def self.read(packet)
       packet.read_lenenc_string
     end
+  end
+end
 
-    def self.parse(str : ::String)
-      ::UUID.new(str)
+class MySql::ResultSet
+  def read(t : ::UUID.class)
+    ::UUID.new(read(String))
+  end
+
+  def read(t : (::UUID | Nil).class)
+    if v = read(String?)
+      ::UUID.new(v)
     end
   end
 end

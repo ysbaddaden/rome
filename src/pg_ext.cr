@@ -2,8 +2,6 @@ require "pg"
 require "uuid"
 
 module PG
-  # alias PGValue = String | Nil | Bool | Int32 | Float32 | Float64 | Time | JSON::Any | PG::Numeric | UUID
-
   module Decoders
     struct UuidDecoder
       def decode(io, bytesize)
