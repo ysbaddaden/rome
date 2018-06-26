@@ -110,6 +110,25 @@ module Rome
         {% end %}
       end
 
+      protected def attributes=(rs : DB::ResultSet) : Nil
+        rs.each_column do |column_name|
+          case column_name
+            {% for key, value in properties %}
+            when {{key.stringify}}
+              {% if value[:converter] %}
+                @{{key}} = {{value[:converter]}}.from_rs(rs)
+              {% elsif value[:nilable] || value[:default] != nil %}
+                @{{key}} = rs.read(::Union({{value[:type]}} | Nil))
+              {% else %}
+                @{{key}} = rs.read({{value[:type]}})
+              {% end %}
+            {% end %}
+          else
+            rs.read # skip
+          end
+        end
+      end
+
       def to_h : Hash
         {
           {% for key, value in properties %}

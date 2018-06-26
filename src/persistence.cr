@@ -56,5 +56,19 @@ module Rome
         .delete
       self.deleted = true
     end
+
+    def reload : self
+      builder = QueryBuilder.new(self.class.table_name)
+        .where!({ self.class.primary_key => id })
+        .limit!(1)
+
+      found = Rome.adapter_class.new(builder).select_one do |rs|
+        self.attributes = rs
+        true
+      end
+      raise RecordNotFound.new unless found
+
+      self
+    end
   end
 end

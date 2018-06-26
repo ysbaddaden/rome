@@ -81,5 +81,16 @@ module Rome
       group.delete
       refute Group.find?(group.id)
     end
+
+    def test_reload
+      group = Group.create(name: "test")
+      Group.find(group.id).update(name: "reloaded")
+
+      assert_equal "reloaded", group.reload.name
+      assert_equal "reloaded", group.name
+
+      Group.find(group.id).delete
+      assert_raises(RecordNotFound) { group.reload }
+    end
   end
 end
