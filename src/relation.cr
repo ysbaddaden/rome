@@ -100,6 +100,15 @@ module Rome
       self
     end
 
+    def order(columns : Hash(Symbol, Symbol)) : self
+      self.class.new @builder.order(columns)
+    end
+
+    def order!(columns : Hash(Symbol, Symbol)) : self
+      @builder.order!(columns)
+      self
+    end
+
     def order(*columns : Symbol) : self
       self.class.new @builder.order(*columns)
     end
@@ -115,6 +124,15 @@ module Rome
 
     def order!(**columns) : self
       @builder.order!(**columns)
+      self
+    end
+
+    def reorder(columns : Hash(Symbol, Symbol)) : self
+      self.class.new @builder.reorder(columns)
+    end
+
+    def reorder!(columns : Hash(Symbol, Symbol)) : self
+      @builder.reorder!(columns)
       self
     end
 

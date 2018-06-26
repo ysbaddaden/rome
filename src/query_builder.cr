@@ -83,6 +83,18 @@ module Rome
       self
     end
 
+    def order(columns : Hash(Symbol, Symbol)) : self
+      builder = dup
+      builder.orders = @orders.dup
+      builder.order!(columns)
+    end
+
+    def order!(columns : Hash(Symbol, Symbol)) : self
+      actual = @orders ||= [] of {Symbol, Symbol}
+      columns.each { |name, direction| actual << {name, direction} }
+      self
+    end
+
     def order(*columns : Symbol) : self
       builder = dup
       builder.orders = @orders.dup
@@ -105,6 +117,17 @@ module Rome
       actual = @orders ||= [] of {Symbol, Symbol}
       columns.each { |name, direction| actual << {name, direction} }
       self
+    end
+
+    def reorder(columns : Hash(Symbol, Symbol)) : self
+      builder = dup
+      builder.orders = [] of {Symbol, Symbol}
+      builder.order!(columns)
+    end
+
+    def reorder!(columns : Hash(Symbol, Symbol)) : self
+      @orders.try(&.clear)
+      order!(columns)
     end
 
     def reorder(*columns : Symbol) : self

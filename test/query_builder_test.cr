@@ -83,11 +83,19 @@ module Rome
     def test_order
       b1 = QueryBuilder.new("foos")
       b2 = b1.order(:id)
-      b3 = b2.order(:name, :value).order(minimum: :desc)
+      b3 = b2.order(:name, :value)
+        .order(minimum: :desc)
+        .order({ :maximum => :asc })
 
       assert_nil b1.orders
       assert_equal [{:id, :none}], b2.orders
-      assert_equal [{:id, :none}, {:name, :none}, {:value, :none}, {:minimum, :desc}], b3.orders
+      assert_equal [
+        {:id, :none},
+        {:name, :none},
+        {:value, :none},
+        {:minimum, :desc},
+        {:maximum, :asc},
+      ], b3.orders
     end
 
     def test_order!
@@ -95,8 +103,15 @@ module Rome
       b.order!(:id)
         .order!(:name, :value)
         .order!(minimum: :desc)
+        .order!({ :maximum => :asc })
 
-      assert_equal [{:id, :none}, {:name, :none}, {:value, :none}, {:minimum, :desc}], b.orders
+      assert_equal [
+        {:id, :none},
+        {:name, :none},
+        {:value, :none},
+        {:minimum, :desc},
+        {:maximum, :asc},
+      ], b.orders
     end
 
     def test_reorder
@@ -104,10 +119,12 @@ module Rome
       b2 = b1.reorder(:value, :minimum)
       b3 = b2.reorder(:id)
       b4 = b3.reorder(id: :desc)
+      b5 = b3.reorder({ :id => :desc })
 
       assert_equal [{:value, :none}, {:minimum, :none}], b2.orders
       assert_equal [{:id, :none}], b3.orders
       assert_equal [{:id, :desc}], b4.orders
+      assert_equal [{:id, :desc}], b5.orders
     end
 
     def test_reorder!
@@ -121,6 +138,9 @@ module Rome
 
       b.reorder!(id: :desc)
       assert_equal [{:id, :desc}], b.orders
+
+      b.reorder!({ :value => :asc })
+      assert_equal [{:value, :asc}], b.orders
     end
   end
 end

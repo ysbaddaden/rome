@@ -65,6 +65,14 @@ module Rome
       query.offset!(value)
     end
 
+    def self.order(columns : Hash(Symbol, Symbol)) : Relation(self)
+      query.order(columns)
+    end
+
+    def self.order!(columns : Hash(Symbol, Symbol)) : Relation(self)
+      query.order!(columns)
+    end
+
     def self.order(*columns : Symbol) : Relation(self)
       query.order(*columns)
     end
@@ -79,6 +87,14 @@ module Rome
 
     def self.order!(**columns) : Relation(self)
       query.order!(**columns)
+    end
+
+    def self.reorder(columns : Hash(Symbol, Symbol)) : Relation(self)
+      query.reorder(columns)
+    end
+
+    def self.reorder!(columns : Hash(Symbol, Symbol)) : Relation(self)
+      query.reorder!(columns)
     end
 
     def self.reorder(*columns : Symbol) : Relation(self)
