@@ -10,9 +10,6 @@ module Rome
       yield rs.last_insert_id
     end
 
-    # def import(column_names : Array, *values : Array)
-    # end
-
     def select_one
       Rome.connection &.query_one?(*select_sql) { |rs| yield rs }
     end
@@ -21,7 +18,7 @@ module Rome
       Rome.connection &.query_all(*select_sql) { |rs| yield rs }
     end
 
-    def select_each
+    def select_each : Nil
       Rome.connection &.query_each(*select_sql) { |rs| yield rs }
     end
 
@@ -72,7 +69,7 @@ module Rome
 
     protected def build_select(io) : Nil
       io << "SELECT "
-      if (selects = builder.selects) && !selects.try(&.empty?)
+      if selects = builder.selects?
         selects.join(", ", io)
       else
         io << '*'
@@ -135,8 +132,7 @@ module Rome
     end
 
     protected def build_where(io, args) : Nil
-      return unless conditions = builder.conditions
-      return if conditions.empty?
+      return unless conditions = builder.conditions?
 
       io << " WHERE "
       conditions.each_with_index do |(column_name, value), index|
@@ -149,8 +145,7 @@ module Rome
     end
 
     protected def build_order_by(io) : Nil
-      return unless orders = builder.orders
-      return if orders.empty?
+      return unless orders = builder.orders?
 
       io << " ORDER BY "
       orders.each_with_index do |(column_name, direction), index|

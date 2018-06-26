@@ -63,8 +63,7 @@ module Rome
     end
 
     protected def build_where(io, args) : Nil
-      return unless conditions = builder.conditions
-      return if conditions.empty?
+      return unless conditions = builder.conditions?
 
       io << " WHERE "
       conditions.each_with_index do |(column_name, value), index|

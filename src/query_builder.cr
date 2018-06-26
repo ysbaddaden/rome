@@ -11,6 +11,24 @@ module Rome
     property limit : Int32?
     property offset : Int32?
 
+    def selects?
+      return unless selects = @selects
+      return if selects.empty?
+      selects
+    end
+
+    def conditions?
+      return unless conditions = @conditions
+      return if conditions.empty?
+      conditions
+    end
+
+    def orders?
+      return unless orders = @orders
+      return if orders.empty?
+      orders
+    end
+
     def initialize(@table_name, @primary_key = "")
     end
 
