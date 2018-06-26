@@ -33,6 +33,47 @@ module Rome
       query.find_by?(**args)
     end
 
+    def self.find_all_by_sql(sql : String, *args) : Array(self)
+      Rome.connection &.query_all(sql, *args) do |rs|
+        record = new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
+    def self.find_one_by_sql(sql : String, *args) : self
+      found = Rome.connection &.query_one?(sql, *args) do |rs|
+        record = new(rs)
+        record.new_record = false
+        record
+      end
+      found || raise RecordNotFound.new
+    end
+
+    def self.find_one_by_sql?(sql : String, *args) : self?
+      Rome.connection &.query_one?(sql, *args) do |rs|
+        record = new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
+    def self.first : self
+      query.first
+    end
+
+    def self.first? : self?
+      query.first?
+    end
+
+    def self.last : self
+      query.last
+    end
+
+    def self.last? : self?
+      query.last?
+    end
+
     def self.where(conditions : Hash | NamedTuple) : Relation(self)
       query.where(conditions)
     end

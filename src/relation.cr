@@ -24,7 +24,7 @@ module Rome
     end
 
     def find?(id) : T?
-      builder = @builder.where({ T.primary_key => id })
+      builder = @builder.where({ T.primary_key => id }).limit(1)
 
       Rome.adapter_class.new(builder).select_one do |rs|
         record = T.new(rs)
@@ -39,6 +39,36 @@ module Rome
 
     def find_by?(**args) : T?
       builder = @builder.where(**args).limit(1)
+
+      Rome.adapter_class.new(builder).select_one do |rs|
+        record = T.new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
+    def first : T
+      first? || raise RecordNotFound.new
+    end
+
+    def first? : T?
+      builder = @builder.limit(1)
+      builder = builder.order({ T.primary_key => :asc }) unless builder.orders?
+
+      Rome.adapter_class.new(builder).select_one do |rs|
+        record = T.new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
+    def last : T
+      last? || raise RecordNotFound.new
+    end
+
+    def last? : T?
+      builder = @builder.limit(1)
+      builder = builder.order({ T.primary_key => :desc }) unless builder.orders?
 
       Rome.adapter_class.new(builder).select_one do |rs|
         record = T.new(rs)

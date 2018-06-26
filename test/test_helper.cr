@@ -9,6 +9,13 @@ unless ENV["DATABASE_URL"]?
   Rome.database_url = "postgres://postgres@/rome_test"
 end
 
+Minitest.after_run do
+  Rome.connection do |db|
+    db.exec "DROP TABLE IF EXISTS groups;"
+    db.exec "DROP TABLE IF EXISTS users;"
+  end
+end
+
 Rome.connection do |db|
   db.exec "DROP TABLE IF EXISTS groups;"
   db.exec "DROP TABLE IF EXISTS users;"
@@ -54,13 +61,6 @@ Rome.connection do |db|
   end
 end
 
-Minitest.after_run do
-  Rome.connection do |db|
-    db.exec "DROP TABLE IF EXISTS groups;"
-    db.exec "DROP TABLE IF EXISTS users;"
-  end
-end
-
 class Group < Rome::Model
   columns(
     id:          {type: Int32, primary: true},
@@ -79,4 +79,12 @@ class User < Rome::Model
     created_at: {type: Time, nilable: true},
     updated_at: {type: Time, nilable: true},
   )
+end
+
+1.upto(2) do |group_id|
+  group = Group.create(name: "Group ##{group_id}")
+
+  1.upto(2) do |index|
+    User.create(uuid: UUID.random, group_id: group.id, name: "User ##{group_id}-#{index}")
+  end
 end
