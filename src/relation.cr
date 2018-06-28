@@ -47,6 +47,21 @@ module Rome
       end
     end
 
+    def exists? : Bool
+      builder = @builder.unscope(:select, :order, :offset)
+        .select!("1 AS one")
+        .limit!(1)
+      Rome.adapter_class.new(builder).select_one { |rs| true } || false
+    end
+
+    def exists?(id) : Bool
+      builder = @builder.unscope(:select, :order, :offset)
+        .select!("1 AS one")
+        .where!({ T.primary_key => id })
+        .limit!(1)
+      Rome.adapter_class.new(builder).select_one { |rs| true } || false
+    end
+
     def first : T
       first? || raise RecordNotFound.new
     end

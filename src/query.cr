@@ -58,6 +58,10 @@ module Rome
       end
     end
 
+    def self.exists?(id) : Bool
+      query.exists?(id)
+    end
+
     def self.first : self
       query.first
     end

@@ -134,5 +134,10 @@ module Rome
       assert_instance_of Group, Group.last?
       assert_instance_of User, User.where(group_id: group_id).order(:name).last?
     end
+
+    def test_exists?
+      assert User.where(group_id: group_id).exists?
+      assert Group.exists?(group_id)
+    end
   end
 end
