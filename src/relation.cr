@@ -109,6 +109,15 @@ module Rome
       self
     end
 
+    def select(sql : String) : self
+      self.class.new @builder.select(sql)
+    end
+
+    def select!(sql : String) : self
+      @builder.select!(sql)
+      self
+    end
+
     def where(conditions : Hash | NamedTuple) : self
       self.class.new @builder.where(conditions)
     end
@@ -124,6 +133,15 @@ module Rome
 
     def where!(**conditions) : self
       @builder.where!(**conditions)
+      self
+    end
+
+    def where(sql : String, *args : Value) : self
+      self.class.new @builder.where(sql, *args)
+    end
+
+    def where!(sql : String, *args : Value) : self
+      @builder.where!(sql, *args)
       self
     end
 

@@ -3,10 +3,12 @@ module Rome
 
   # :nodoc:
   struct QueryBuilder
+    alias Conditions = Array({Symbol, Value} | {String, Array(Value)})
+
     property table_name : String
     property primary_key : String
     property selects : Array(Symbol | String)?
-    property conditions : Hash(Symbol, Value)?
+    property conditions : Conditions?
     property orders : Array(Tuple(Symbol, Symbol))?
     property limit : Int32?
     property offset : Int32?
@@ -47,13 +49,29 @@ module Rome
 
     def where(conditions : Hash | NamedTuple) : self
       builder = dup
-      builder.conditions = @conditions.dup
+      builder.conditions = @conditions.dup.as(Conditions?)
       builder.where!(conditions)
     end
 
     def where!(conditions : Hash | NamedTuple) : self
-      actual = @conditions ||= {} of Symbol => Value
-      conditions.each { |k, v| actual[k] = v }
+      actual = @conditions ||= Conditions.new
+      conditions.each { |k, v| actual << {k, v} }
+      self
+    end
+
+    def where(raw : String, *args : Value) : self
+      builder = dup
+      builder.conditions = @conditions.dup.as(Conditions?)
+      builder.where!(raw, *args)
+    end
+
+    def where!(raw : String, *args : Value) : self
+      actual = @conditions ||= Conditions.new
+      if args.empty?
+        actual << {raw, nil}
+      else
+        actual << {raw, Array(Value).new(args.size) { |i| args[i] }}
+      end
       self
     end
 

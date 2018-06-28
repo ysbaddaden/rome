@@ -156,12 +156,19 @@ module Rome
       return unless conditions = builder.conditions?
 
       io << " WHERE "
-      conditions.each_with_index do |(column_name, value), index|
-        args << value
-
+      conditions.each_with_index do |condition, index|
         io << " AND " unless index == 0
-        quote(column_name, io)
-        io << " = ?"
+        case condition
+        when {Symbol, Value}
+          args << condition[1].as(Value)
+          quote(condition[0], io)
+          io << " = ?"
+        when {String, Array(Value)?}
+          if values = condition[1]
+            args += values.as(Array(Value))
+          end
+          io << condition[0]
+        end
       end
     end
 

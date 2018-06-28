@@ -53,19 +53,28 @@ module Rome
       uuid = UUID.random
       b4 = b2.where(group_id: uuid, minimum: 123.456)
 
+      b5 = b2.where("key LIKE ?", "test%")
+        .where("value > ? AND value < ?", 10, 20)
+
       assert_nil b1.conditions
-      assert_equal({ :id => 1 }, b2.conditions)
+      assert_equal [{:id, 1}], b2.conditions
 
-      assert_equal({
-        :id => 1,
-        :name => "something",
-      }, b3.conditions)
+      assert_equal [
+        {:id, 1},
+        {:name, "something"},
+      ], b3.conditions
 
-      assert_equal({
-        :id => 1,
-        :group_id => uuid,
-        :minimum => 123.456
-      }, b4.conditions)
+      assert_equal [
+        {:id, 1},
+        {:group_id, uuid},
+        {:minimum, 123.456},
+      ], b4.conditions
+
+      assert_equal [
+        {:id, 1},
+        {"key LIKE ?", ["test%"]},
+        {"value > ? AND value < ?", [10, 20]},
+      ], b5.conditions
     end
 
     def test_where!
@@ -73,11 +82,15 @@ module Rome
       b.where!({ :id => 1 })
         .where!({ name: "something" })
         .where!(minimum: 123.4)
-      assert_equal({
-        :id => 1,
-        :name => "something",
-        :minimum => 123.4
-      }, b.conditions)
+        .where!("key LIKE ?", "test%")
+        .where!("value > ? AND value < ?", 10, 20)
+      assert_equal [
+        {:id, 1},
+        {:name, "something"},
+        {:minimum, 123.4},
+        {"key LIKE ?", ["test%"]},
+        {"value > ? AND value < ?", [10, 20]},
+      ], b.conditions
     end
 
     def test_order

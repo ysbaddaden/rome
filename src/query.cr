@@ -78,6 +78,22 @@ module Rome
       query.last?
     end
 
+    def self.select(*columns : Symbol) : Relation(self)
+      query.select(*columns)
+    end
+
+    def self.select!(*columns : Symbol) : Relation(self)
+      query.select!(*columns)
+    end
+
+    def self.select(sql : String) : Relation(self)
+      query.select(sql)
+    end
+
+    def self.select!(sql : String) : Relation(self)
+      query.select!(sql)
+    end
+
     def self.where(conditions : Hash | NamedTuple) : Relation(self)
       query.where(conditions)
     end
@@ -92,6 +108,14 @@ module Rome
 
     def self.where!(**conditions) : Relation(self)
       query.where!(**conditions)
+    end
+
+    def self.where(sql : String, *args : Value) : Relation(self)
+      query.where(sql, *args)
+    end
+
+    def self.where!(sql : String, *args : Value) : Relation(self)
+      query.where!(sql, *args)
     end
 
     def self.limit(value : Int32) : Relation(self)

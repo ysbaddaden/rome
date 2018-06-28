@@ -139,5 +139,10 @@ module Rome
       assert User.where(group_id: group_id).exists?
       assert Group.exists?(group_id)
     end
+
+    def test_where
+      users = User.where("name LIKE ?", "X-%").where("group_id BETWEEN ? AND ?", -1, 200)
+      assert_instance_of Array(User), users.all
+    end
   end
 end
