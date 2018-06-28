@@ -2,6 +2,12 @@ require "./adapter"
 
 module Rome
   struct Adapter::PostgreSQL < Adapter
+    def quote(name : Symbol | String, io : IO)
+      io << '"'
+      name.to_s(io)
+      io << '"'
+    end
+
     def insert(attributes : Hash | NamedTuple)
       Rome.connection &.query_one(*insert_sql(attributes)) do |rs|
         yield rs.read
@@ -9,11 +15,13 @@ module Rome
     end
 
     private def build_insert(attributes : Hash, io, args)
-      io << "INSERT INTO " << builder.table_name << " ("
+      io << "INSERT INTO "
+      quote(builder.table_name, io)
+      io << " ("
 
       attributes.each_with_index do |(column_name, _), index|
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
       end
 
       io << ") VALUES ("
@@ -26,11 +34,13 @@ module Rome
     end
 
     private def build_insert(attributes : NamedTuple, io, args)
-      io << "INSERT INTO " << builder.table_name << " ("
+      io << "INSERT INTO "
+      quote(builder.table_name, io)
+      io << " ("
 
       attributes.each_with_index do |column_name, _, index|
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
       end
 
       io << ") VALUES ("
@@ -43,21 +53,25 @@ module Rome
     end
 
     private def build_update(attributes : Hash, io, args)
-      io << "UPDATE " << builder.table_name << " SET "
+      io << "UPDATE "
+      quote(builder.table_name, io)
+      io << " SET "
       attributes.each_with_index do |(column_name, value), index|
         args << value
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
         io << " = $" << args.size
       end
     end
 
     private def build_update(attributes : NamedTuple, io, args)
-      io << "UPDATE " << builder.table_name << " SET "
+      io << "UPDATE "
+      quote(builder.table_name, io)
+      io << " SET "
       attributes.each_with_index do |column_name, value, index|
         args << value
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
         io << " = $" << args.size
       end
     end
@@ -69,7 +83,7 @@ module Rome
       conditions.each_with_index do |(column_name, value), index|
         args << value
         io << " AND " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
         io << " = $" << args.size
       end
     end

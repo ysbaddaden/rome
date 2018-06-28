@@ -5,6 +5,8 @@ module Rome
     def initialize(@builder)
     end
 
+    abstract def quote(name : Symbol | String, io : IO)
+
     def insert(attributes : Hash | NamedTuple) : Nil
       rs = Rome.connection &.exec(*insert_sql(attributes))
       yield rs.last_insert_id
@@ -70,18 +72,24 @@ module Rome
     protected def build_select(io) : Nil
       io << "SELECT "
       if selects = builder.selects?
-        selects.join(", ", io)
+        selects.each_with_index do |column_name, index|
+          io << ", " unless index == 0
+          quote(column_name, io)
+        end
       else
         io << '*'
       end
-      io << " FROM " << builder.table_name
+      io << " FROM "
+      quote(builder.table_name, io)
     end
 
     private def build_insert(attributes : Hash, io, args)
-      io << "INSERT INTO " << builder.table_name << " ("
+      io << "INSERT INTO "
+      quote(builder.table_name, io)
+      io << " ("
       attributes.each_with_index do |(column_name, _), index|
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
       end
       io << ") VALUES ("
       attributes.each_with_index do |(_, value), index|
@@ -93,10 +101,12 @@ module Rome
     end
 
     private def build_insert(attributes : NamedTuple, io, args)
-      io << "INSERT INTO " << builder.table_name << " ("
+      io << "INSERT INTO "
+      quote(builder.table_name, io)
+      io << " ("
       attributes.each_with_index do |column_name, _, index|
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
       end
       io << ") VALUES ("
       attributes.each_with_index do |_, value, index|
@@ -108,27 +118,33 @@ module Rome
     end
 
     private def build_update(attributes : Hash, io, args)
-      io << "UPDATE " << builder.table_name << " SET "
+      io << "UPDATE "
+      quote(builder.table_name, io)
+      io << " SET "
       attributes.each_with_index do |(column_name, value), index|
         args << value
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
         io << " = ?"
       end
     end
 
     private def build_update(attributes : NamedTuple, io, args)
-      io << "UPDATE " << builder.table_name << " SET "
+      io << "UPDATE "
+      quote(builder.table_name, io)
+      io << " SET "
       attributes.each_with_index do |column_name, value, index|
         args << value
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
         io << " = ?"
       end
     end
 
     private def build_delete(io : IO) : Nil
-      io << "DELETE FROM " << builder.table_name
+      io << "DELETE FROM "
+      quote(builder.table_name, io)
+      io << ' '
     end
 
     protected def build_where(io, args) : Nil
@@ -139,7 +155,7 @@ module Rome
         args << value
 
         io << " AND " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
         io << " = ?"
       end
     end
@@ -150,7 +166,7 @@ module Rome
       io << " ORDER BY "
       orders.each_with_index do |(column_name, direction), index|
         io << ", " unless index == 0
-        column_name.to_s(io)
+        quote(column_name, io)
 
         case direction
         when :asc then io << " ASC"
