@@ -32,6 +32,11 @@ module Rome
       Rome.connection &.exec(*delete_sql)
     end
 
+    def to_sql : String
+      sql, _ = select_sql
+      sql
+    end
+
     protected def insert_sql(attributes) : {String, Array(Value)}
       args = [] of Value
       sql = String.build do |str|

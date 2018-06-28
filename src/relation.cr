@@ -225,5 +225,9 @@ module Rome
       @builder.unscope!(*args)
       self
     end
+
+    def to_sql : String
+      Rome.adapter_class.new(@builder).to_sql
+    end
   end
 end
