@@ -163,16 +163,17 @@ module Rome
       io << " WHERE "
       conditions.each_with_index do |condition, index|
         io << " AND " unless index == 0
+
         case condition
         when {Symbol, Value}
           args << condition[1].as(Value)
-          quote(condition[0], io)
+          quote(condition[0].as(Symbol), io)
           io << " = ?"
         when {String, Array(Value)?}
-          if values = condition[1]
-            args += values.as(Array(Value))
+          if values = condition[1].as(Array(Value)?)
+            args.concat(values)
           end
-          io << condition[0]
+          io << condition[0].as(String)
         end
       end
     end
