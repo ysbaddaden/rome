@@ -4,16 +4,16 @@ module Rome
   class QueryBuilderTest < Minitest::Test
     def test_select
       b1 = QueryBuilder.new("foos")
-      b2 = b1.select(:id).select(:name, :value)
+      b2 = b1.select(:id).select(:name, "1 AS one")
 
       assert_nil b1.selects
-      assert_equal %i(id name value), b2.selects
+      assert_equal [:id, :name, "1 AS one"], b2.selects
     end
 
     def test_select!
       b = QueryBuilder.new("foos")
-      b.select!(:id).select!(:name, :value)
-      assert_equal %i(id name value), b.selects
+      b.select!(:id).select!(:name, :value, "1 AS one")
+      assert_equal [:id, :name, :value, "1 AS one"], b.selects
     end
 
     def test_limit

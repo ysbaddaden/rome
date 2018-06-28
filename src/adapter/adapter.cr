@@ -74,7 +74,12 @@ module Rome
       if selects = builder.selects?
         selects.each_with_index do |column_name, index|
           io << ", " unless index == 0
-          quote(column_name, io)
+          case column_name
+          when Symbol
+            quote(column_name, io)
+          when String
+            io << column_name
+          end
         end
       else
         io << '*'

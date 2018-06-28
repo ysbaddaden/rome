@@ -5,7 +5,7 @@ module Rome
   struct QueryBuilder
     property table_name : String
     property primary_key : String
-    property selects : Array(Symbol)?
+    property selects : Array(Symbol | String)?
     property conditions : Hash(Symbol, Value)?
     property orders : Array(Tuple(Symbol, Symbol))?
     property limit : Int32?
@@ -32,15 +32,15 @@ module Rome
     def initialize(@table_name, @primary_key = "")
     end
 
-    def select(*columns : Symbol) : self
+    def select(*columns : Symbol | String) : self
       builder = dup
       builder.selects = @selects.dup
       builder.select!(*columns)
       builder
     end
 
-    def select!(*columns : Symbol) : self
-      actual = @selects ||= [] of Symbol
+    def select!(*columns : Symbol | String) : self
+      actual = @selects ||= [] of Symbol | String
       columns.each { |name| actual << name }
       self
     end
