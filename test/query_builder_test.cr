@@ -142,5 +142,90 @@ module Rome
       b.reorder!({ :value => :asc })
       assert_equal [{:value, :asc}], b.orders
     end
+
+    def test_unscope
+      b = QueryBuilder.new("foos")
+        .select(:id, :group_id)
+        .where(group_id: 1)
+        .order(:id)
+        .limit(10)
+        .offset(200)
+
+      b1 = b.unscope(:select)
+      b2 = b.unscope(:where)
+      b3 = b.unscope(:order)
+      b4 = b.unscope(:limit)
+      b5 = b.unscope(:offset)
+
+      refute_nil b.selects?
+      refute_nil b.conditions?
+      refute_nil b.orders?
+      refute_nil b.limit
+      refute_nil b.offset
+
+      assert_nil b1.selects?
+      refute_nil b1.conditions?
+      refute_nil b1.orders?
+      refute_nil b1.limit
+      refute_nil b1.offset
+
+      refute_nil b2.selects?
+      assert_nil b2.conditions?
+      refute_nil b2.orders?
+      refute_nil b2.limit
+      refute_nil b2.offset
+
+      refute_nil b3.selects?
+      refute_nil b3.conditions?
+      assert_nil b3.orders?
+      refute_nil b3.limit
+      refute_nil b3.offset
+
+      refute_nil b4.selects?
+      refute_nil b4.conditions?
+      refute_nil b4.orders?
+      assert_nil b4.limit
+      refute_nil b4.offset
+
+      refute_nil b5.selects?
+      refute_nil b5.conditions?
+      refute_nil b5.orders?
+      refute_nil b5.limit
+      assert_nil b5.offset
+    end
+
+    def test_unscope!
+      b = QueryBuilder.new("foos")
+        .select!(:id, :group_id)
+        .where!(group_id: 1)
+        .order!(:id)
+        .limit!(10)
+        .offset!(200)
+
+      b.unscope!(:select)
+      assert_nil b.selects?
+      refute_nil b.conditions?
+      refute_nil b.orders?
+      refute_nil b.limit
+      refute_nil b.offset
+
+      b.unscope!(:where)
+      assert_nil b.conditions?
+      refute_nil b.orders?
+      refute_nil b.limit
+      refute_nil b.offset
+
+      b.unscope!(:order)
+      assert_nil b.orders?
+      refute_nil b.limit
+      refute_nil b.offset
+
+      b.unscope!(:limit)
+      assert_nil b.limit
+      refute_nil b.offset
+
+      b.unscope!(:offset)
+      assert_nil b.offset
+    end
   end
 end

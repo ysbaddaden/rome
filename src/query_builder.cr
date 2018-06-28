@@ -151,5 +151,24 @@ module Rome
       @orders.try(&.clear)
       order!(**columns)
     end
+
+    def unscope(*args : Symbol) : self
+      builder = dup
+      builder.unscope!(*args)
+    end
+
+    def unscope!(*args : Symbol) : self
+      args.each do |arg|
+        case arg
+        when :select then @selects = nil
+        when :where then @conditions = nil
+        when :order then @orders = nil
+        when :limit then @limit = nil
+        when :offset then @offset = nil
+        else raise "unknown property to unscope: #{arg}"
+        end
+      end
+      self
+    end
   end
 end

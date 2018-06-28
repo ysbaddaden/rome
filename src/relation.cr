@@ -183,5 +183,14 @@ module Rome
       @builder.reorder!(**columns)
       self
     end
+
+    def unscope(*args) : self
+      self.class.new @builder.unscope(*args)
+    end
+
+    def unscope!(*args) : self
+      @builder.unscope!(*args)
+      self
+    end
   end
 end
