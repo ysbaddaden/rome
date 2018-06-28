@@ -38,21 +38,28 @@ module Rome
 end
 
 {% if flag?(:ROME_DEBUG) %}
+  require "colorize"
+
   module DB::QueryMethods
     def query(sql, *args)
-      __rome_log(sql, args)
-      build(sql).query(*args)
+      __rome_log(sql, args) { build(sql).query(*args) }
     end
 
     def exec(sql, *args)
-      __rome_log(sql, args)
-      build(sql).exec(*args)
+      __rome_log(sql, args) { build(sql).exec(*args) }
     end
 
-    private def __rome_log(sql, args) : Nil
+    private def __rome_log(sql, args)
+      rs = nil
+      spent = Time.measure { rs = yield }
+
       log = String.build do |str|
-        str << "DB: "
-        sql.gsub('\n', ' ').inspect(str)
+        Colorize::Object.new("").fore(:light_magenta).surround(str) do
+          str << "SQL ("
+          spent.total_milliseconds.round(2).to_s(str)
+          str << "ms)  "
+        end
+        str << sql.gsub(/\s+/, ' ')
         str << ' '
         str << '['
         args.each_with_index do |arg, index|
@@ -61,7 +68,10 @@ end
         end
         str << ']'
       end
-      STDERR.puts log
+
+      STDERR.puts(log)
+
+      rs.not_nil!
     end
   end
 {% end %}
