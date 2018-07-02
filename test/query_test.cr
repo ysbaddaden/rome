@@ -39,6 +39,18 @@ module Rome
       assert_instance_of Group, Group.find?(group_id)
     end
 
+    def test_take
+      assert_instance_of User, User.take
+      assert_instance_of Group, Group.take
+      assert_raises(RecordNotFound) { User.where(uuid: UUID.random).take }
+    end
+
+    def test_take?
+      assert_instance_of User, User.take?
+      assert_instance_of Group, Group.take?
+      assert_nil User.where(uuid: UUID.random).take?
+    end
+
     def test_find_by
       assert_equal User, typeof(User.find_by(uuid: UUID.random))
       assert_equal Group, typeof(Group.find_by(id: group_id))

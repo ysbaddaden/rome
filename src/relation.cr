@@ -62,6 +62,20 @@ module Rome
       Rome.adapter_class.new(builder).select_one { |rs| true } || false
     end
 
+    def take : T
+      take? || raise RecordNotFound.new
+    end
+
+    def take? : T?
+      builder = @builder.limit(1)
+
+      Rome.adapter_class.new(builder).select_one do |rs|
+        record = T.new(rs)
+        record.new_record = false
+        record
+      end
+    end
+
     def first : T
       first? || raise RecordNotFound.new
     end

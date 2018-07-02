@@ -62,6 +62,14 @@ module Rome
       query.exists?(id)
     end
 
+    def self.take : self
+      query.take
+    end
+
+    def self.take? : self?
+      query.take?
+    end
+
     def self.first : self
       query.first
     end
