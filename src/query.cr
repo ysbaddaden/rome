@@ -78,7 +78,7 @@ module Rome
       query.last?
     end
 
-    def self.pluck(column_name : Symbol) : Array(Value)
+    def self.pluck(column_name : Symbol | String) : Array(Value)
       query.pluck(column_name)
     end
 

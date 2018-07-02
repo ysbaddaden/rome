@@ -92,7 +92,7 @@ module Rome
       end
     end
 
-    def pluck(column_name : Symbol) : Array(Value)
+    def pluck(column_name : Symbol | String) : Array(Value)
       builder = @builder.unscope(:select)
       builder.select!(column_name)
       Rome.adapter_class.new(builder).select_all { |rs| rs.read(Value) }

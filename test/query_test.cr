@@ -151,9 +151,8 @@ module Rome
     end
 
     def test_pluck
-      User.pluck(:uuid).each do |uuid|
-        assert_instance_of UUID, uuid
-      end
+      User.pluck(:uuid).each { |uuid| assert_instance_of UUID|String, uuid }
+      User.pluck("LENGTH(name)").each { |len| assert_instance_of Int, len }
     end
 
     def test_count
