@@ -149,5 +149,32 @@ module Rome
       users = User.order(:name, "group_id DESC")
       assert_instance_of Array(User), users.all
     end
+
+    def test_count
+      assert_instance_of Int64, User.count
+      assert_instance_of Int64, User.count(:group_id, distinct: true)
+    end
+
+    def test_average
+      assert_instance_of Float64, User.average(:group_id)
+      assert_instance_of Float64, User.average("LENGTH(name)")
+    end
+
+    def test_sum
+      assert_instance_of Int64, User.sum(:group_id)
+      assert_instance_of Int64, User.sum("LENGTH(name)")
+    end
+
+    def test_minimum
+      assert_instance_of Int32, User.minimum(:group_id)
+      assert_instance_of String, User.minimum(:name)
+      assert_instance_of Int32, User.minimum("LENGTH(name)")
+    end
+
+    def test_maximum
+      assert_instance_of Int32, User.maximum(:group_id)
+      assert_instance_of String, User.maximum(:name)
+      assert_instance_of Int32, User.maximum("LENGTH(name)")
+    end
   end
 end

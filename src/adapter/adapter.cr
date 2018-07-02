@@ -5,7 +5,11 @@ module Rome
     def initialize(@builder)
     end
 
-    abstract def quote(name : Symbol | String, io : IO)
+    # abstract def self.quote(name : Symbol | String, io : IO)
+
+    def quote(name : Symbol | String, io : IO)
+      self.class.quote(name, io)
+    end
 
     def insert(attributes : Hash | NamedTuple) : Nil
       rs = Rome.connection &.exec(*insert_sql(attributes))
@@ -22,6 +26,10 @@ module Rome
 
     def select_each : Nil
       Rome.connection &.query_each(*select_sql) { |rs| yield rs }
+    end
+
+    def scalar
+      Rome.connection &.scalar(*select_sql)
     end
 
     def update(attributes : Hash | NamedTuple) : Nil

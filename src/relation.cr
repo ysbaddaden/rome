@@ -68,7 +68,7 @@ module Rome
 
     def first? : T?
       builder = @builder.limit(1)
-      builder = builder.order({ T.primary_key => :asc }) unless builder.orders?
+      builder.order!({ T.primary_key => :asc }) unless builder.orders?
 
       Rome.adapter_class.new(builder).select_one do |rs|
         record = T.new(rs)
@@ -83,13 +83,63 @@ module Rome
 
     def last? : T?
       builder = @builder.limit(1)
-      builder = builder.order({ T.primary_key => :desc }) unless builder.orders?
+      builder.order!({ T.primary_key => :desc }) unless builder.orders?
 
       Rome.adapter_class.new(builder).select_one do |rs|
         record = T.new(rs)
         record.new_record = false
         record
       end
+    end
+
+    def count(column_name : Symbol | String = "*", distinct = false) : Int64
+      calculate("COUNT", column_name, distinct).as(Int).to_i64
+    end
+
+    def sum(column_name : Symbol | String) : Int64 | Float64
+      rs = calculate("SUM", column_name)
+      if rs.responds_to?(:to_i64)
+        rs.to_i64
+      elsif rs.responds_to?(:to_f64)
+        rs.to_f64
+      else
+        raise Error.new("expected integer or floating point number but got #{rs.class.name}")
+      end
+    end
+
+    def average(column_name : Symbol | String) : Float64
+      rs = calculate("AVG", column_name)
+      if rs.responds_to?(:to_f64)
+        rs.to_f64
+      else
+        raise Error.new("expected floating point number but got #{rs.class.name}")
+      end
+    end
+
+    def minimum(column_name : Symbol | String)
+      calculate("MIN", column_name)
+    end
+
+    def maximum(column_name : Symbol | String)
+      calculate("MAX", column_name)
+    end
+
+    protected def calculate(function, column_name, distinct = false)
+      selects = String.build do |str|
+        str << function
+        str << '('
+        str << "DISTINCT " if distinct
+        case column_name
+        when Symbol
+          Rome.adapter_class.quote(column_name, str)
+        when String
+          str << column_name
+        end
+        str << ')'
+      end
+      builder = @builder.unscope(:select)
+      builder.select!(selects)
+      Rome.adapter_class.new(builder).scalar
     end
 
     def update(**attributes) : Nil

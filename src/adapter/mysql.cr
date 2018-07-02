@@ -2,7 +2,7 @@ require "./adapter"
 
 module Rome
   struct Adapter::MySQL < Adapter
-    def quote(name : Symbol | String, io : IO)
+    def self.quote(name : Symbol | String, io : IO)
       io << '`'
       name.to_s(io)
       io << '`'

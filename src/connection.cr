@@ -49,6 +49,10 @@ end
       __rome_log(sql, args) { build(sql).exec(*args) }
     end
 
+    def scalar(sql, *args)
+      __rome_log(sql, args) { build(sql).scalar(*args) }
+    end
+
     private def __rome_log(sql, args)
       rs = nil
       error = nil

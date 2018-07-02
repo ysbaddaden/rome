@@ -78,6 +78,26 @@ module Rome
       query.last?
     end
 
+    def self.count(column_name : Symbol | String = "*", distinct = false) : Int64
+      query.count(column_name, distinct)
+    end
+
+    def self.sum(column_name : Symbol | String) : Int64 | Float64
+      query.sum(column_name)
+    end
+
+    def self.average(column_name : Symbol | String) : Float64
+      query.average(column_name)
+    end
+
+    def self.minimum(column_name : Symbol | String)
+      query.minimum(column_name)
+    end
+
+    def self.maximum(column_name : Symbol | String)
+      query.maximum(column_name)
+    end
+
     def self.select(*columns : Symbol) : Relation(self)
       query.select(*columns)
     end
