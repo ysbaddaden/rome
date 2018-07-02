@@ -30,7 +30,8 @@ module Rome
         io << ", " unless index == 0
         io << '$' << args.size
       end
-      io << ") RETURNING " << builder.primary_key
+      io << ") RETURNING "
+      quote(builder.primary_key, io)
     end
 
     private def build_insert(attributes : NamedTuple, io, args)
@@ -49,7 +50,8 @@ module Rome
         io << ", " unless index == 0
         io << '$' << args.size
       end
-      io << ") RETURNING " << builder.primary_key
+      io << ") RETURNING "
+      quote(builder.primary_key, io)
     end
 
     private def build_update(attributes : Hash, io, args)
@@ -84,7 +86,7 @@ module Rome
         io << " AND " unless index == 0
 
         case condition
-        when {Symbol, Value}
+        when {Symbol | String, Value}
           args << condition[1].as(Value)
           quote(condition[0], io)
           io << " = $" << args.size

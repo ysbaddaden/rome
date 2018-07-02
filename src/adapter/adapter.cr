@@ -154,7 +154,6 @@ module Rome
     private def build_delete(io : IO) : Nil
       io << "DELETE FROM "
       quote(builder.table_name, io)
-      io << ' '
     end
 
     protected def build_where(io, args) : Nil
@@ -165,9 +164,9 @@ module Rome
         io << " AND " unless index == 0
 
         case condition
-        when {Symbol, Value}
+        when {Symbol | String, Value}
           args << condition[1].as(Value)
-          quote(condition[0].as(Symbol), io)
+          quote(condition[0], io)
           io << " = ?"
         when {String, Array(Value)?}
           if values = condition[1].as(Array(Value)?)
