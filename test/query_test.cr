@@ -166,15 +166,15 @@ module Rome
     end
 
     def test_minimum
-      assert_instance_of Int32, User.minimum(:group_id)
+      assert_instance_of Int, User.minimum(:group_id)
       assert_instance_of String, User.minimum(:name)
-      assert_instance_of Int32, User.minimum("LENGTH(name)")
+      assert_instance_of Int, User.minimum("LENGTH(name)")
     end
 
     def test_maximum
-      assert_instance_of Int32, User.maximum(:group_id)
+      assert_instance_of Int, User.maximum(:group_id)
       assert_instance_of String, User.maximum(:name)
-      assert_instance_of Int32, User.maximum("LENGTH(name)")
+      assert_instance_of Int, User.maximum("LENGTH(name)")
     end
   end
 end
