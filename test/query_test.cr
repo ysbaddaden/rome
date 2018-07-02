@@ -150,6 +150,12 @@ module Rome
       assert_instance_of Array(User), users.all
     end
 
+    def test_pluck
+      User.pluck(:uuid).each do |uuid|
+        assert_instance_of UUID, uuid
+      end
+    end
+
     def test_count
       assert_instance_of Int64, User.count
       assert_instance_of Int64, User.count(:group_id, distinct: true)

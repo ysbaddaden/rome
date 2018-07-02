@@ -78,6 +78,10 @@ module Rome
       query.last?
     end
 
+    def self.pluck(column_name : Symbol) : Array(Value)
+      query.pluck(column_name)
+    end
+
     def self.count(column_name : Symbol | String = "*", distinct = false) : Int64
       query.count(column_name, distinct)
     end

@@ -92,6 +92,12 @@ module Rome
       end
     end
 
+    def pluck(column_name : Symbol) : Array(Value)
+      builder = @builder.unscope(:select)
+      builder.select!(column_name)
+      Rome.adapter_class.new(builder).select_all { |rs| rs.read(Value) }
+    end
+
     def count(column_name : Symbol | String = "*", distinct = false) : Int64
       calculate("COUNT", column_name, distinct).as(Int).to_i64
     end
