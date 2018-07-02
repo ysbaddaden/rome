@@ -51,7 +51,15 @@ end
 
     private def __rome_log(sql, args)
       rs = nil
-      spent = Time.measure { rs = yield }
+      error = nil
+
+      spent = Time.measure do
+        begin
+          rs = yield
+        rescue ex
+          error = ex
+        end
+      end
 
       log = String.build do |str|
         Colorize::Object.new("").fore(:light_magenta).surround(str) do
@@ -71,6 +79,7 @@ end
 
       STDERR.puts(log)
 
+      raise error if error
       rs.not_nil!
     end
   end
