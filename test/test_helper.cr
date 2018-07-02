@@ -70,8 +70,6 @@ class Group < Rome::Model
 end
 
 class User < Rome::Model
-  set_primary_key = :uuid
-
   columns(
     uuid:       {type: UUID, primary: true},
     group_id:   {type: Int32},
