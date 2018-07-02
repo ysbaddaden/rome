@@ -142,11 +142,11 @@ module Rome
       query.order!(columns)
     end
 
-    def self.order(*columns : Symbol) : Relation(self)
+    def self.order(*columns : Symbol | String) : Relation(self)
       query.order(*columns)
     end
 
-    def self.order!(*columns : Symbol) : Relation(self)
+    def self.order!(*columns : Symbol | String) : Relation(self)
       query.order!(*columns)
     end
 
@@ -166,11 +166,11 @@ module Rome
       query.reorder!(columns)
     end
 
-    def self.reorder(*columns : Symbol) : Relation(self)
+    def self.reorder(*columns : Symbol | String) : Relation(self)
       query.reorder(*columns)
     end
 
-    def self.reorder!(*columns : Symbol) : Relation(self)
+    def self.reorder!(*columns : Symbol | String) : Relation(self)
       query.reorder!(*columns)
     end
 

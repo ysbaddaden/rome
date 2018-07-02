@@ -144,5 +144,10 @@ module Rome
       users = User.where("name LIKE ?", "X-%").where("group_id BETWEEN ? AND ?", -1, 200)
       assert_instance_of Array(User), users.all
     end
+
+    def test_order
+      users = User.order(:name, "group_id DESC")
+      assert_instance_of Array(User), users.all
+    end
   end
 end

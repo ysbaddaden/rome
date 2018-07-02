@@ -182,14 +182,19 @@ module Rome
       return unless orders = builder.orders?
 
       io << " ORDER BY "
-      orders.each_with_index do |(column_name, direction), index|
+      orders.each_with_index do |order, index|
         io << ", " unless index == 0
-        quote(column_name, io)
 
-        case direction
-        when :asc then io << " ASC"
-        when :desc then io << " DESC"
-        when :none
+        case order
+        when {Symbol, Symbol}
+          column_name, direction = order.as({Symbol, Symbol})
+          quote(column_name, io)
+          case direction
+          when :asc then io << " ASC"
+          when :desc then io << " DESC"
+          end
+        when String
+          io << order
         end
       end
     end

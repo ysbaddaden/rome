@@ -172,11 +172,11 @@ module Rome
       self
     end
 
-    def order(*columns : Symbol) : self
+    def order(*columns : Symbol | String) : self
       self.class.new @builder.order(*columns)
     end
 
-    def order!(*columns : Symbol) : self
+    def order!(*columns : Symbol | String) : self
       @builder.order!(*columns)
       self
     end
@@ -199,11 +199,11 @@ module Rome
       self
     end
 
-    def reorder(*columns : Symbol) : self
+    def reorder(*columns : Symbol | String) : self
       self.class.new @builder.reorder(*columns)
     end
 
-    def reorder!(*columns : Symbol) : self
+    def reorder!(*columns : Symbol | String) : self
       @builder.reorder!(*columns)
       self
     end

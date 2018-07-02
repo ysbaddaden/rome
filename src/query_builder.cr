@@ -4,12 +4,13 @@ module Rome
   # :nodoc:
   struct QueryBuilder
     alias Conditions = Array({Symbol, Value} | {String, Array(Value)})
+    alias Orders = Array({Symbol, Symbol} | String)
 
     property table_name : String
     property primary_key : String
     property selects : Array(Symbol | String)?
     property conditions : Conditions?
-    property orders : Array(Tuple(Symbol, Symbol))?
+    property orders : Orders?
     property limit : Int32?
     property offset : Int32?
 
@@ -108,20 +109,27 @@ module Rome
     end
 
     def order!(columns : Hash(Symbol, Symbol)) : self
-      actual = @orders ||= [] of {Symbol, Symbol}
+      actual = @orders ||= Orders.new
       columns.each { |name, direction| actual << {name, direction} }
       self
     end
 
-    def order(*columns : Symbol) : self
+    def order(*columns : Symbol | String) : self
       builder = dup
       builder.orders = @orders.dup
       builder.order!(*columns)
     end
 
-    def order!(*columns : Symbol) : self
-      actual = @orders ||= [] of {Symbol, Symbol}
-      columns.each { |name| actual << {name, :none} }
+    def order!(*columns : Symbol | String) : self
+      actual = @orders ||= Orders.new
+      columns.each do |value|
+        case value
+        when Symbol
+          actual << {value, :asc}
+        when String
+          actual << value
+        end
+      end
       self
     end
 
@@ -132,14 +140,14 @@ module Rome
     end
 
     def order!(**columns) : self
-      actual = @orders ||= [] of {Symbol, Symbol}
+      actual = @orders ||= Orders.new
       columns.each { |name, direction| actual << {name, direction} }
       self
     end
 
     def reorder(columns : Hash(Symbol, Symbol)) : self
       builder = dup
-      builder.orders = [] of {Symbol, Symbol}
+      builder.orders = Orders.new
       builder.order!(columns)
     end
 
@@ -148,20 +156,20 @@ module Rome
       order!(columns)
     end
 
-    def reorder(*columns : Symbol) : self
+    def reorder(*columns : Symbol | String) : self
       builder = dup
-      builder.orders = [] of {Symbol, Symbol}
+      builder.orders = Orders.new
       builder.order!(*columns)
     end
 
-    def reorder!(*columns : Symbol) : self
+    def reorder!(*columns : Symbol | String) : self
       @orders.try(&.clear)
       order!(*columns)
     end
 
     def reorder(**columns) : self
       builder = dup
-      builder.orders = [] of {Symbol, Symbol}
+      builder.orders = Orders.new
       builder.order!(**columns)
     end
 
