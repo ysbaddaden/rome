@@ -173,36 +173,47 @@ module Rome
       conditions.each_with_index do |condition, index|
         io << " AND " unless index == 0
 
-        case condition[0]
-        when Symbol
-          quote(condition[0], io)
+        case condition
+        when QueryBuilder::Condition
+          quote(condition.column_name, io)
 
-          case value = condition[1]
+          case value = condition.value
           when Array(Value)
-            io << " IN ("
+            if condition.not
+              io << " NOT IN ("
+            else
+              io << " IN ("
+            end
             value.size.times do |index|
               io << ", " unless index == 0
               io << '?'
             end
             io << ')'
             args.concat(value)
+
+          when nil
+            if condition.not
+              io << " IS NOT NULL"
+            else
+              io << " IS NULL"
+            end
+
           else
-            args << value.as(Value)
-            io << " = ?"
+            args << value
+            if condition.not
+              io << " <> ?"
+            else
+              io << " = ?"
+            end
           end
 
-        when String
-          case value = condition[1]
-          when Array(Value)
-            args.concat(value)
-            io << condition[0]
-          when nil
-            io << condition[0]
-          else
-            raise "unreachable"
+        when QueryBuilder::RawCondition
+          io << "NOT " if condition.not
+          io << '(' << condition.raw << ')'
+
+          if values = condition.values
+            args.concat(values)
           end
-        else
-          raise "unreachable"
         end
       end
     end

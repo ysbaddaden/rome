@@ -3,8 +3,26 @@ module Rome
 
   # :nodoc:
   struct QueryBuilder
+    struct Condition
+      getter column_name : Symbol
+      getter value : Value | Array(Value)
+      property not : Bool
+
+      def initialize(@column_name, @value, @not = false)
+      end
+    end
+
+    struct RawCondition
+      getter raw : String
+      getter values : Array(Value)?
+      property not : Bool
+
+      def initialize(@raw, @values, @not = false)
+      end
+    end
+
     alias Selects = Array(Symbol | String)
-    alias Conditions = Array({Symbol, Value | Array(Value)} | {String, Array(Value)})
+    alias Conditions = Array(Condition | RawCondition)
     alias Orders = Array({Symbol, Symbol} | String)
 
     property table_name : String
@@ -17,6 +35,7 @@ module Rome
 
     def initialize(@table_name, @primary_key = "")
       @distinct = false
+      @not = false
     end
 
     def selects? : Selects?
@@ -63,9 +82,26 @@ module Rome
       @distinct
     end
 
+    def where_not(*args, **opts)
+      builder = dup
+      builder.conditions = @conditions.dup
+      builder._not { builder.where!(*args, **opts) }
+    end
+
+    def where_not!(*args, **opts)
+      _not { where!(*args, **opts) }
+    end
+
+    protected def _not
+      @not = true
+      yield
+    ensure
+      @not = false
+    end
+
     def where(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
       builder = dup
-      builder.conditions = @conditions.dup.as(Conditions?)
+      builder.conditions = @conditions.dup
       builder.where!(conditions)
     end
 
@@ -73,27 +109,30 @@ module Rome
       actual = @conditions ||= Conditions.new
       conditions.each do |k, v|
         if v.is_a?(Enumerable)
-          actual << {k, v.map(&.as(Value))}
+          actual << Condition.new(k, v.map(&.as(Value)), @not)
         else
-          actual << {k, v}
+          actual << Condition.new(k, v, @not)
         end
       end
+      @not = false
       self
     end
 
-    def where(raw : String, *args : Value) : self
+    def where(raw : String, *args) : self
       builder = dup
-      builder.conditions = @conditions.dup.as(Conditions?)
+      builder.conditions = @conditions.dup
       builder.where!(raw, *args)
     end
 
-    def where!(raw : String, *args : Value) : self
+    def where!(raw : String, *args) : self
       actual = @conditions ||= Conditions.new
       if args.empty?
-        actual << {raw, nil}
+        actual << RawCondition.new(raw, nil, @not)
       else
-        actual << {raw, Array(Value).new(args.size) { |i| args[i] }}
+        values = Array(Value).new(args.size) { |i| args[i].as(Value) }
+        actual << RawCondition.new(raw, values, @not)
       end
+      @not = false
       self
     end
 

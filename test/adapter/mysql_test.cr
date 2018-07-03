@@ -27,7 +27,7 @@ module Rome
       @builder.where!("about LIKE ?", "tom%")
 
       assert_sql({
-        %(SELECT * FROM `users` WHERE `name` = ? AND `name` = ? AND `group_id` = ? AND about LIKE ?),
+        %(SELECT * FROM `users` WHERE `name` = ? AND `name` = ? AND `group_id` = ? AND (about LIKE ?)),
         ["tom", "alice", 1, "tom%"]
       }, adapter.select_sql)
 
@@ -44,6 +44,24 @@ module Rome
 
       assert_sql({
         %(SELECT * FROM `users` WHERE `id` IN (?, ?, ?)), [1, 3, 4],
+      }, adapter.select_sql)
+    end
+
+    def test_select_where_not
+      @builder.where_not!(name: "tom")
+      @builder.where_not!({ :name => "alice", :group_id => 1 })
+      @builder.where_not!("about LIKE ?", "tom%")
+
+      assert_sql({
+        %(SELECT * FROM `users` WHERE `name` <> ? AND `name` <> ? AND `group_id` <> ? AND NOT (about LIKE ?)),
+        ["tom", "alice", 1, "tom%"]
+      }, adapter.select_sql)
+
+      @builder.unscope!(:where)
+      @builder.where!(name: "tom", group_id: 1)
+
+      assert_sql({
+        %(SELECT * FROM `users` WHERE `name` = ? AND `group_id` = ?), ["tom", 1]
       }, adapter.select_sql)
     end
 
@@ -100,13 +118,13 @@ module Rome
       }, adapter.insert_sql({ :name => "julien", :about => "" }))
     end
 
-    def test_udpate
+    def test_update
       assert_sql({
         %(UPDATE `users` SET `name` = ?), ["alice"]
       }, adapter.update_sql({ name: "alice" }))
     end
 
-    def test_udpate_where
+    def test_update_where
       uuid = UUID.random
       @builder.where!(uuid: uuid)
 

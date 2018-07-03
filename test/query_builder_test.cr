@@ -73,23 +73,25 @@ module Rome
         .where("value > ? AND value < ?", 10, 20)
 
       assert_nil b1.conditions
-      assert_equal [{:id, 1}], b2.conditions
+      assert_equal [
+        QueryBuilder::Condition.new(:id, 1),
+      ], b2.conditions
 
       assert_equal [
-        {:id, 1},
-        {:name, "something"},
+        QueryBuilder::Condition.new(:id, 1),
+        QueryBuilder::Condition.new(:name, "something"),
       ], b3.conditions
 
       assert_equal [
-        {:id, 1},
-        {:group_id, uuid},
-        {:minimum, 123.456},
+        QueryBuilder::Condition.new(:id, 1),
+        QueryBuilder::Condition.new(:group_id, uuid),
+        QueryBuilder::Condition.new(:minimum, 123.456),
       ], b4.conditions
 
       assert_equal [
-        {:id, 1},
-        {"key LIKE ?", ["test%"]},
-        {"value > ? AND value < ?", [10, 20]},
+        QueryBuilder::Condition.new(:id, 1),
+        QueryBuilder::RawCondition.new("key LIKE ?", ["test%"] of Value),
+        QueryBuilder::RawCondition.new("value > ? AND value < ?", [10, 20] of Value),
       ], b5.conditions
     end
 
@@ -98,7 +100,40 @@ module Rome
       b2 = b1.where(id: [1, 3, 4])
 
       assert_nil b1.conditions
-      assert_equal [{:id, [1, 3, 4]}], b2.conditions
+      assert_equal [
+        QueryBuilder::Condition.new(:id, [1, 3, 4] of Value),
+      ], b2.conditions
+    end
+
+    def test_where_not
+      b1 = QueryBuilder.new("foos")
+      b2 = b1.where_not(id: 12)
+      b3 = b2.where_not("id > ?", 12345).where("name IS NOT NULL")
+
+      assert_nil b1.conditions
+
+      assert_equal [
+        QueryBuilder::Condition.new(:id, 12, not: true),
+      ], b2.conditions
+
+      assert_equal [
+        QueryBuilder::Condition.new(:id, 12, not: true),
+        QueryBuilder::RawCondition.new("id > ?", [12345] of Value, not: true),
+        QueryBuilder::RawCondition.new("name IS NOT NULL", nil),
+      ], b3.conditions
+    end
+
+    def test_where_not!
+      b = QueryBuilder.new("foos")
+      b.where_not!(id: 12)
+      b.where_not!("id > ?", 12345)
+      b.where!("name IS NOT NULL")
+
+      assert_equal [
+        QueryBuilder::Condition.new(:id, 12, not: true),
+        QueryBuilder::RawCondition.new("id > ?", [12345] of Value, not: true),
+        QueryBuilder::RawCondition.new("name IS NOT NULL", nil),
+      ], b.conditions
     end
 
     def test_where!
@@ -109,11 +144,11 @@ module Rome
         .where!("key LIKE ?", "test%")
         .where!("value > ? AND value < ?", 10, 20)
       assert_equal [
-        {:id, 1},
-        {:name, "something"},
-        {:minimum, 123.4},
-        {"key LIKE ?", ["test%"]},
-        {"value > ? AND value < ?", [10, 20]},
+        QueryBuilder::Condition.new(:id, 1),
+        QueryBuilder::Condition.new(:name, "something"),
+        QueryBuilder::Condition.new(:minimum, 123.4),
+        QueryBuilder::RawCondition.new("key LIKE ?", ["test%"] of Value),
+        QueryBuilder::RawCondition.new("value > ? AND value < ?", [10, 20] of Value),
       ], b.conditions
     end
 
