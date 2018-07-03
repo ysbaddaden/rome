@@ -132,7 +132,7 @@ module Rome
       query.distinct(value)
     end
 
-    def self.where(conditions : Hash | NamedTuple) : Relation(self)
+    def self.where(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : Relation(self)
       query.where(conditions)
     end
 

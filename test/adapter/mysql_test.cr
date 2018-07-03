@@ -23,7 +23,7 @@ module Rome
 
     def test_select_where
       @builder.where!(name: "tom")
-      @builder.where!({ :name => "alice", "group_id" => 1 })
+      @builder.where!({ :name => "alice", :group_id => 1 })
       @builder.where!("about LIKE ?", "tom%")
 
       assert_sql({
@@ -36,6 +36,14 @@ module Rome
 
       assert_sql({
         %(SELECT * FROM `users` WHERE `name` = ? AND `group_id` = ?), ["tom", 1]
+      }, adapter.select_sql)
+    end
+
+    def test_select_where_in
+      @builder.where!(id: [1, 3, 4])
+
+      assert_sql({
+        %(SELECT * FROM `users` WHERE `id` IN (?, ?, ?)), [1, 3, 4],
       }, adapter.select_sql)
     end
 

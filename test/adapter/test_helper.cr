@@ -8,7 +8,7 @@ module Rome
       assert_equal expected.gsub(/\s+/, ' '), actual[0], message, file, line
     end
 
-    protected def assert_sql(expected : Tuple(String, Array(Value)), actual, message = nil, file = __FILE__, line = __LINE__)
+    protected def assert_sql(expected : Tuple, actual, message = nil, file = __FILE__, line = __LINE__)
       sql, values = expected
       assert_equal sql.gsub(/\s+/, ' '), actual[0], message, file, line
       assert_equal values, actual[1], message, file, line

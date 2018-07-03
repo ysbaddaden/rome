@@ -4,7 +4,7 @@ module Rome
   # :nodoc:
   struct QueryBuilder
     alias Selects = Array(Symbol | String)
-    alias Conditions = Array({Symbol, Value} | {String, Array(Value)})
+    alias Conditions = Array({Symbol, Value | Array(Value)} | {String, Array(Value)})
     alias Orders = Array({Symbol, Symbol} | String)
 
     property table_name : String
@@ -63,15 +63,21 @@ module Rome
       @distinct
     end
 
-    def where(conditions : Hash | NamedTuple) : self
+    def where(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
       builder = dup
       builder.conditions = @conditions.dup.as(Conditions?)
       builder.where!(conditions)
     end
 
-    def where!(conditions : Hash | NamedTuple) : self
+    def where!(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
       actual = @conditions ||= Conditions.new
-      conditions.each { |k, v| actual << {k, v} }
+      conditions.each do |k, v|
+        if v.is_a?(Enumerable)
+          actual << {k, v.map(&.as(Value))}
+        else
+          actual << {k, v}
+        end
+      end
       self
     end
 

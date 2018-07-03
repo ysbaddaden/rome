@@ -85,20 +85,37 @@ module Rome
       conditions.each_with_index do |condition, index|
         io << " AND " unless index == 0
 
-        case condition
-        when {Symbol | String, Value}
-          args << condition[1].as(Value)
+        case condition[0]
+        when Symbol
           quote(condition[0], io)
-          io << " = $" << args.size
 
-        when {String, Array(Value)?}
-          if values = condition[1]
-            n = args.size
-            args.concat(values.as(Array(Value)))
-            io << condition[0].as(String).gsub("?") { "$#{n += 1}" }
+          case value = condition[1]
+          when Array(Value)
+            io << " IN ("
+            value.size.times do |index|
+              io << ", " unless index == 0
+              io << '$' << args.size + index + 1
+            end
+            io << ')'
+            args.concat(value)
           else
-            io << condition[0]
+            args << value.as(Value)
+            io << " = $" << args.size
           end
+
+        when String
+          case value = condition[1]
+          when Array(Value)
+            n = args.size
+            args.concat(value)
+            io << condition[0].as(String).gsub("?") { "$#{n += 1}" }
+          when nil
+            io << condition[0]
+          else
+            raise "unreachable"
+          end
+        else
+          raise "unreachable"
         end
       end
     end

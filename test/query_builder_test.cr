@@ -93,6 +93,14 @@ module Rome
       ], b5.conditions
     end
 
+    def test_where_in
+      b1 = QueryBuilder.new("foos")
+      b2 = b1.where(id: [1, 3, 4])
+
+      assert_nil b1.conditions
+      assert_equal [{:id, [1, 3, 4]}], b2.conditions
+    end
+
     def test_where!
       b = QueryBuilder.new("foos")
       b.where!({ :id => 1 })

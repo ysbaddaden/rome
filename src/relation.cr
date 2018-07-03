@@ -206,11 +206,11 @@ module Rome
       @builder.distinct!(value)
     end
 
-    def where(conditions : Hash | NamedTuple) : self
+    def where(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
       self.class.new @builder.where(conditions)
     end
 
-    def where!(conditions : Hash | NamedTuple) : self
+    def where!(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
       @builder.where!(conditions)
       self
     end
