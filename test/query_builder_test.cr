@@ -16,6 +16,22 @@ module Rome
       assert_equal [:id, :name, :value, "1 AS one"], b.selects
     end
 
+    def test_distinct
+      b1 = QueryBuilder.new("foos")
+      b2 = b1.distinct
+
+      refute b1.distinct?
+      assert b2.distinct?
+    end
+
+    def test_distinct!
+      b = QueryBuilder.new("foos")
+      refute b.distinct?
+
+      b.distinct!
+      assert b.distinct?
+    end
+
     def test_limit
       b1 = QueryBuilder.new("foos")
       b2 = b1.limit(50)

@@ -112,7 +112,7 @@ module Rome
       Rome.adapter_class.new(builder).select_all { |rs| rs.read(Value) }
     end
 
-    def count(column_name : Symbol | String = "*", distinct = false) : Int64
+    def count(column_name : Symbol | String = "*", distinct = @builder.distinct?) : Int64
       calculate("COUNT", column_name, distinct).as(Int).to_i64
     end
 
@@ -144,7 +144,7 @@ module Rome
       calculate("MAX", column_name)
     end
 
-    protected def calculate(function, column_name, distinct = false)
+    protected def calculate(function, column_name, distinct = @builder.distinct?)
       selects = String.build do |str|
         str << function
         str << '('
@@ -186,6 +186,14 @@ module Rome
     def select!(sql : String) : self
       @builder.select!(sql)
       self
+    end
+
+    def distinct(value = true) : self
+      self.class.new @builder.distinct(value)
+    end
+
+    def distinct!(value = true) : self
+      @builder.distinct!(value)
     end
 
     def where(conditions : Hash | NamedTuple) : self

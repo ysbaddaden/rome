@@ -168,8 +168,18 @@ module Rome
     end
 
     def test_count
-      assert_instance_of Int64, User.count
-      assert_instance_of Int64, User.count(:group_id, distinct: true)
+      total = User.count
+      assert_instance_of Int64, total
+
+      distinct1 = User.distinct.count(:group_id)
+      assert_instance_of Int64, distinct1
+
+      distinct2 = User.count(:group_id, distinct: true)
+      assert_instance_of Int64, distinct2
+
+      assert_equal total, User.count(:group_id)
+      assert distinct1 < total
+      assert_equal distinct1, distinct2
     end
 
     def test_average

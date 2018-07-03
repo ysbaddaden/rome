@@ -16,6 +16,7 @@ module Rome
     property offset : Int32?
 
     def initialize(@table_name, @primary_key = "")
+      @distinct = false
     end
 
     def selects? : Selects?
@@ -47,6 +48,19 @@ module Rome
       actual = @selects ||= Selects.new
       columns.each { |name| actual << name }
       self
+    end
+
+    def distinct(distinct = true) : self
+      builder = dup
+      builder.distinct!(distinct)
+    end
+
+    def distinct!(@distinct = true) : self
+      self
+    end
+
+    def distinct? : Bool
+      @distinct
     end
 
     def where(conditions : Hash | NamedTuple) : self

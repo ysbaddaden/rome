@@ -84,6 +84,8 @@ module Rome
 
     protected def build_select(io) : Nil
       io << "SELECT "
+      io << "DISTINCT " if builder.distinct?
+
       if selects = builder.selects?
         selects.each_with_index do |column_name, index|
           io << ", " unless index == 0

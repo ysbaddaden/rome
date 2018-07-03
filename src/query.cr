@@ -126,6 +126,14 @@ module Rome
       query.select!(sql)
     end
 
+    def self.distinct(value = true) : Relation(self)
+      query.distinct(value)
+    end
+
+    def self.distinct!(value = true) : Relation(self)
+      query.distinct!(value)
+    end
+
     def self.where(conditions : Hash | NamedTuple) : Relation(self)
       query.where(conditions)
     end

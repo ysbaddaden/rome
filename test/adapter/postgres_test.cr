@@ -13,6 +13,14 @@ module Rome
       assert_sql %(SELECT "name", 1 AS one FROM "users"), adapter.select_sql
     end
 
+    def test_select_distinct
+      @builder.distinct!
+      assert_sql %(SELECT DISTINCT * FROM "users"), adapter.select_sql
+
+      @builder.distinct!(false)
+      assert_sql %(SELECT * FROM "users"), adapter.select_sql
+    end
+
     def test_select_where
       @builder.where!(name: "tom")
       @builder.where!({ :name => "alice", "group_id" => 1 })
