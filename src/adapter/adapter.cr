@@ -17,14 +17,20 @@ module Rome
     end
 
     def select_one
+      return if @builder.none?
       Rome.connection &.query_one?(*select_sql) { |rs| yield rs }
     end
 
-    def select_all
-      Rome.connection &.query_all(*select_sql) { |rs| yield rs }
+    def select_all(&block : DB::ResultSet -> U) : Array(U) forall U
+      if @builder.none?
+        Array(U).new(0)
+      else
+        Rome.connection &.query_all(*select_sql) { |rs| yield rs }
+      end
     end
 
     def select_each : Nil
+      return if @builder.none?
       Rome.connection &.query_each(*select_sql) { |rs| yield rs }
     end
 
@@ -33,10 +39,12 @@ module Rome
     end
 
     def update(attributes : Hash | NamedTuple) : Nil
+      return if @builder.none?
       Rome.connection &.exec(*update_sql(attributes))
     end
 
     def delete : Nil
+      return if @builder.none?
       Rome.connection &.exec(*delete_sql)
     end
 

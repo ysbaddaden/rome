@@ -18,23 +18,63 @@ module Rome
       end
     end
 
-    def test_all
-      assert_instance_of Array(User), User.all
-      assert_instance_of Array(Group), Group.all
+    def test_each_iterator
+      User.all.each { |record| assert_instance_of User, record }
+    end
+
+    def test_each_iterator
+      users = User.all
+
+      iterator = users.each
+      assert_equal Iterator::Stop | User, typeof(iterator.next)
+
+      until (value = iterator.next).is_a?(Iterator::Stop)
+        assert_instance_of User, value
+      end
+    end
+
+    def test_each_iterator_with_cache
+      users = User.all
+      users.to_a
+
+      iterator = users.each
+      assert_equal Iterator::Stop | User, typeof(iterator.next)
+
+      until (value = iterator.next).is_a?(Iterator::Stop)
+        assert_instance_of User, value
+      end
     end
 
     def test_all
-      assert_equal Array(User), typeof(User.none)
-      assert_equal [] of User, User.none
+      assert_instance_of Relation(User), User.all
+      assert_instance_of Relation(Group), Group.all
 
-      assert_equal Array(Group), typeof(Group.none)
-      assert_equal [] of Group, Group.none
+      assert_instance_of Array(User), User.all.to_a
+      assert_instance_of Array(Group), Group.all.to_a
+    end
 
-      assert_equal Array(User), typeof(User.select("*").none)
-      assert_equal [] of User, User.select("*").none
+    def test_none
+      assert_equal Relation(User), typeof(User.none)
+      assert_equal [] of User, User.none.to_a
 
-      assert_equal Array(Group), typeof(Group.select("*").none)
-      assert_equal [] of Group, Group.select("*").none
+      assert_equal Relation(Group), typeof(Group.none)
+      assert_equal [] of Group, Group.none.to_a
+
+      assert_equal Relation(User), typeof(User.select("*").none)
+      assert_equal [] of User, User.select("*").none.to_a
+
+      assert_equal Relation(Group), typeof(Group.select("*").none)
+      assert_equal [] of Group, Group.select("*").none.to_a
+
+      assert_nil Group.none.find?(group_id)
+      assert_nil Group.none.find_by?(id: group_id)
+      refute Group.none.exists?(group_id)
+
+      assert_equal 0, Group.none.count
+      assert_equal 0, Group.none.sum("LENGTH(name)")
+      assert_equal 0, Group.none.average("LENGTH(name)")
+      assert_nil Group.none.minimum("name")
+      assert_nil Group.none.maximum("name")
     end
 
     def test_ids
@@ -175,12 +215,12 @@ module Rome
 
     def test_where
       users = User.where("name LIKE ?", "X-%").where("group_id BETWEEN ? AND ?", -1, 200)
-      assert_instance_of Array(User), users.all
+      assert_instance_of Array(User), users.to_a
     end
 
     def test_order
       users = User.order(:name, "group_id DESC")
-      assert_instance_of Array(User), users.all
+      assert_instance_of Array(User), users.to_a
     end
 
     def test_pluck

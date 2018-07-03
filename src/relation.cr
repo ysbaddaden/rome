@@ -1,32 +1,48 @@
 module Rome
   struct Relation(T)
+    include Enumerable(T)
+
+    @cache : Array(T)?
+
     protected def initialize(@builder : QueryBuilder)
     end
 
     def each(&block : T ->) : Nil
-      Rome.adapter_class.new(@builder).select_each do |rs|
-        record = T.new(rs)
-        record.new_record = false
-        yield record
+      to_a.each { |record| yield record }
+    end
+
+    def each
+      if cache = @cache
+        cache.each
+      else
+        RelationIterator(T).new(@builder)
       end
     end
 
-    def none : Array(T)
-      Array(T).new(0)
-    end
-
-    def all : Array(T)
-      Rome.adapter_class.new(@builder).select_all do |rs|
+    def to_a
+      @cache ||= Rome.adapter_class.new(@builder).select_all do |rs|
         record = T.new(rs)
         record.new_record = false
         record
       end
     end
 
+    def none : self
+      self.class.new @builder.none
+    end
+
+    def all : self
+      self
+    end
+
     def ids : Array(T::PrimaryKeyType)
-      builder = @builder.unscope(:select)
-      builder.select!(T.primary_key)
-      Rome.adapter_class.new(builder).select_all { |rs| rs.read(T::PrimaryKeyType) }
+      if cache = @cache
+        cache.map(&.id)
+      else
+        builder = @builder.unscope(:select)
+        builder.select!(T.primary_key)
+        Rome.adapter_class.new(builder).select_all { |rs| rs.read(T::PrimaryKeyType) }
+      end
     end
 
     def find(id : T::PrimaryKeyType) : T
@@ -77,12 +93,16 @@ module Rome
     end
 
     def take? : T?
-      builder = @builder.limit(1)
+      if cache = @cache
+        cache.first?
+      else
+        builder = @builder.limit(1)
 
-      Rome.adapter_class.new(builder).select_one do |rs|
-        record = T.new(rs)
-        record.new_record = false
-        record
+        Rome.adapter_class.new(builder).select_one do |rs|
+          record = T.new(rs)
+          record.new_record = false
+          record
+        end
       end
     end
 
@@ -91,13 +111,17 @@ module Rome
     end
 
     def first? : T?
-      builder = @builder.limit(1)
-      builder.order!({ T.primary_key => :asc }) unless builder.orders?
+      if cache = @cache
+        cache.first?
+      else
+        builder = @builder.limit(1)
+        builder.order!({ T.primary_key => :asc }) unless builder.orders?
 
-      Rome.adapter_class.new(builder).select_one do |rs|
-        record = T.new(rs)
-        record.new_record = false
-        record
+        Rome.adapter_class.new(builder).select_one do |rs|
+          record = T.new(rs)
+          record.new_record = false
+          record
+        end
       end
     end
 
@@ -106,13 +130,17 @@ module Rome
     end
 
     def last? : T?
-      builder = @builder.limit(1)
-      builder.order!({ T.primary_key => :desc }) unless builder.orders?
+      if cache = @cache
+        cache.last?
+      else
+        builder = @builder.limit(1)
+        builder.order!({ T.primary_key => :desc }) unless builder.orders?
 
-      Rome.adapter_class.new(builder).select_one do |rs|
-        record = T.new(rs)
-        record.new_record = false
-        record
+        Rome.adapter_class.new(builder).select_one do |rs|
+          record = T.new(rs)
+          record.new_record = false
+          record
+        end
       end
     end
 
@@ -120,6 +148,14 @@ module Rome
       builder = @builder.unscope(:select)
       builder.select!(column_name)
       Rome.adapter_class.new(builder).select_all { |rs| rs.read(Value) }
+    end
+
+    def size
+      if cache = @cache
+        cache.size
+      else
+        count
+      end
     end
 
     def count(column_name : Symbol | String = "*", distinct = @builder.distinct?) : Int64
@@ -132,6 +168,8 @@ module Rome
         rs.to_i64
       elsif rs.responds_to?(:to_f64)
         rs.to_f64
+      elsif rs.nil?
+        0_i64
       else
         raise Error.new("expected integer or floating point number but got #{rs.class.name}")
       end
@@ -141,6 +179,8 @@ module Rome
       rs = calculate("AVG", column_name)
       if rs.responds_to?(:to_f64)
         rs.to_f64
+      elsif rs.nil?
+        0.0
       else
         raise Error.new("expected floating point number but got #{rs.class.name}")
       end
@@ -316,6 +356,51 @@ module Rome
 
     def to_sql : String
       Rome.adapter_class.new(@builder).to_sql
+    end
+  end
+
+  # :nodoc:
+  private struct RelationIterator(T)
+    include ::Iterator(Relation(T))
+
+    @rs : DB::ResultSet?
+
+    def initialize(@builder : QueryBuilder)
+      @stop = false
+    end
+
+    def next
+      return stop if @stop
+
+      rs = @rs ||= query
+
+      if rs.move_next
+        record = T.new(rs)
+        record.new_record = false
+        record
+      else
+        @stop = true
+        stop
+      end
+    end
+
+    def stop
+      if rs = @rs
+        while rs.move_next; end
+        rs.close
+        @rs = nil
+      end
+
+      super
+    end
+
+    def rewind
+      raise "can't rewind relation iterator"
+    end
+
+    private def query
+      sql, args = Rome.adapter_class.new(@builder).select_sql
+      Rome.connection.query(sql, args)
     end
   end
 end

@@ -36,6 +36,7 @@ module Rome
     def initialize(@table_name, @primary_key = "")
       @distinct = false
       @not = false
+      @none = false
     end
 
     def selects? : Selects?
@@ -80,6 +81,20 @@ module Rome
 
     def distinct? : Bool
       @distinct
+    end
+
+    def none : self
+      builder = self.class.new(table_name, primary_key)
+      builder.where!("1 = 0")
+      builder.none = true
+      builder
+    end
+
+    def none=(@none : Bool) : Bool
+    end
+
+    def none? : Bool
+      @none
     end
 
     def where_not(*args, **opts)

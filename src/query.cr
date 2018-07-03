@@ -9,17 +9,15 @@ module Rome
       {% end %}
     end
 
-    def self.none : Array
-      {% begin %}
-      Array({{@type}}).new(0)
-      {% end %}
-    end
-
     def self.each : Nil
       query.each { yield rs }
     end
 
-    def self.all : Array(self)
+    def self.each : Iterator
+      query.each
+    end
+
+    def self.all : Relation(self)
       query.all
     end
 
@@ -118,6 +116,10 @@ module Rome
 
     def self.maximum(column_name : Symbol | String)
       query.maximum(column_name)
+    end
+
+    def self.none : Relation(self)
+      query.none
     end
 
     def self.select(*columns : Symbol) : Relation(self)
