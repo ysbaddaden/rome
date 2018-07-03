@@ -23,6 +23,20 @@ module Rome
       assert_instance_of Array(Group), Group.all
     end
 
+    def test_all
+      assert_equal Array(User), typeof(User.none)
+      assert_equal [] of User, User.none
+
+      assert_equal Array(Group), typeof(Group.none)
+      assert_equal [] of Group, Group.none
+
+      assert_equal Array(User), typeof(User.select("*").none)
+      assert_equal [] of User, User.select("*").none
+
+      assert_equal Array(Group), typeof(Group.select("*").none)
+      assert_equal [] of Group, Group.select("*").none
+    end
+
     def test_ids
       assert_equal Array(UUID), typeof(User.ids)
       assert_equal Array(Int32), typeof(Group.ids)

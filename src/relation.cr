@@ -11,6 +11,10 @@ module Rome
       end
     end
 
+    def none : Array(T)
+      Array(T).new(0)
+    end
+
     def all : Array(T)
       Rome.adapter_class.new(@builder).select_all do |rs|
         record = T.new(rs)

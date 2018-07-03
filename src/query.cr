@@ -9,6 +9,12 @@ module Rome
       {% end %}
     end
 
+    def self.none : Array
+      {% begin %}
+      Array({{@type}}).new(0)
+      {% end %}
+    end
+
     def self.each : Nil
       query.each { yield rs }
     end
