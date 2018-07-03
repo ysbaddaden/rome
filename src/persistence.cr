@@ -1,6 +1,6 @@
 module Rome
   abstract class Model
-    def self.create(**args) : self?
+    def self.create(**args) : self
       create new(**args)
     end
 
