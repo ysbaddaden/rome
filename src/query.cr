@@ -114,112 +114,56 @@ module Rome
       query.select(*columns)
     end
 
-    def self.select!(*columns : Symbol) : Relation(self)
-      query.select!(*columns)
-    end
-
     def self.select(sql : String) : Relation(self)
       query.select(sql)
-    end
-
-    def self.select!(sql : String) : Relation(self)
-      query.select!(sql)
     end
 
     def self.distinct(value = true) : Relation(self)
       query.distinct(value)
     end
 
-    def self.distinct!(value = true) : Relation(self)
-      query.distinct!(value)
-    end
-
     def self.where(conditions : Hash | NamedTuple) : Relation(self)
       query.where(conditions)
-    end
-
-    def self.where!(conditions : Hash | NamedTuple) : Relation(self)
-      query.where!(conditions)
     end
 
     def self.where(**conditions) : Relation(self)
       query.where(**conditions)
     end
 
-    def self.where!(**conditions) : Relation(self)
-      query.where!(**conditions)
-    end
-
     def self.where(sql : String, *args : Value) : Relation(self)
       query.where(sql, *args)
-    end
-
-    def self.where!(sql : String, *args : Value) : Relation(self)
-      query.where!(sql, *args)
     end
 
     def self.limit(value : Int32) : Relation(self)
       query.limit(value)
     end
 
-    def self.limit!(value : Int32) : Relation(self)
-      query.limit!(value)
-    end
-
     def self.offset(value : Int32) : Relation(self)
       query.offset(value)
-    end
-
-    def self.offset!(value : Int32) : Relation(self)
-      query.offset!(value)
     end
 
     def self.order(columns : Hash(Symbol, Symbol)) : Relation(self)
       query.order(columns)
     end
 
-    def self.order!(columns : Hash(Symbol, Symbol)) : Relation(self)
-      query.order!(columns)
-    end
-
     def self.order(*columns : Symbol | String) : Relation(self)
       query.order(*columns)
-    end
-
-    def self.order!(*columns : Symbol | String) : Relation(self)
-      query.order!(*columns)
     end
 
     def self.order(**columns) : Relation(self)
       query.order(**columns)
     end
 
-    def self.order!(**columns) : Relation(self)
-      query.order!(**columns)
-    end
-
     def self.reorder(columns : Hash(Symbol, Symbol)) : Relation(self)
       query.reorder(columns)
-    end
-
-    def self.reorder!(columns : Hash(Symbol, Symbol)) : Relation(self)
-      query.reorder!(columns)
     end
 
     def self.reorder(*columns : Symbol | String) : Relation(self)
       query.reorder(*columns)
     end
 
-    def self.reorder!(*columns : Symbol | String) : Relation(self)
-      query.reorder!(*columns)
-    end
-
     def self.reorder(**columns) : Relation(self)
       query.reorder(**columns)
-    end
-
-    def self.reorder!(**columns) : Relation(self)
-      query.reorder!(**columns)
     end
   end
 end
