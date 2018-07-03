@@ -23,6 +23,13 @@ module Rome
       assert_instance_of Array(Group), Group.all
     end
 
+    def test_ids
+      assert_equal Array(UUID), typeof(User.ids)
+      assert_equal Array(Int32), typeof(Group.ids)
+      assert_instance_of Array(UUID), User.ids
+      assert_instance_of Array(Int32), Group.ids
+    end
+
     def test_find
       assert_equal User, typeof(User.find(UUID.random))
       assert_equal Group, typeof(Group.find(group_id))

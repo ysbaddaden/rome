@@ -17,12 +17,20 @@ module Rome
       query.all
     end
 
+    def self.ids : Array
+      query.ids
+    end
+
     def self.find(id) : self
       query.find(id)
     end
 
     def self.find?(id) : self?
       query.find?(id)
+    end
+
+    def self.exists?(id) : Bool
+      query.exists?(id)
     end
 
     def self.find_by(**args) : self
@@ -56,10 +64,6 @@ module Rome
         record.new_record = false
         record
       end
-    end
-
-    def self.exists?(id) : Bool
-      query.exists?(id)
     end
 
     def self.take : self

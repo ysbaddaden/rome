@@ -19,11 +19,17 @@ module Rome
       end
     end
 
-    def find(id) : T
+    def ids : Array(T::PrimaryKeyType)
+      builder = @builder.unscope(:select)
+      builder.select!(T.primary_key)
+      Rome.adapter_class.new(builder).select_all { |rs| rs.read(T::PrimaryKeyType) }
+    end
+
+    def find(id : T::PrimaryKeyType) : T
       find?(id) || raise RecordNotFound.new
     end
 
-    def find?(id) : T?
+    def find?(id : T::PrimaryKeyType) : T?
       builder = @builder.where({ T.primary_key => id }).limit(1)
 
       Rome.adapter_class.new(builder).select_one do |rs|
@@ -54,7 +60,7 @@ module Rome
       Rome.adapter_class.new(builder).select_one { |rs| true } || false
     end
 
-    def exists?(id) : Bool
+    def exists?(id : T::PrimaryKeyType) : Bool
       builder = @builder.unscope(:select, :order, :offset)
         .select!("1 AS one")
         .where!({ T.primary_key => id })

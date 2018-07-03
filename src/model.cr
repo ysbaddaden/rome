@@ -27,6 +27,8 @@ module Rome
     end
 
     private macro set_primary_key(name, type)
+      alias PrimaryKeyType = {{type}}
+
       @@primary_key = {{name.id.symbolize}}
       @{{name.id}} : {{type}} | Nil
 
