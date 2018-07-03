@@ -3,36 +3,37 @@ module Rome
 
   # :nodoc:
   struct QueryBuilder
+    alias Selects = Array(Symbol | String)
     alias Conditions = Array({Symbol, Value} | {String, Array(Value)})
     alias Orders = Array({Symbol, Symbol} | String)
 
     property table_name : String
     property primary_key : String
-    property selects : Array(Symbol | String)?
+    property selects : Selects?
     property conditions : Conditions?
     property orders : Orders?
     property limit : Int32?
     property offset : Int32?
 
-    def selects?
+    def initialize(@table_name, @primary_key = "")
+    end
+
+    def selects? : Selects?
       return unless selects = @selects
       return if selects.empty?
       selects
     end
 
-    def conditions?
+    def conditions? : Conditions?
       return unless conditions = @conditions
       return if conditions.empty?
       conditions
     end
 
-    def orders?
+    def orders? : Orders?
       return unless orders = @orders
       return if orders.empty?
       orders
-    end
-
-    def initialize(@table_name, @primary_key = "")
     end
 
     def select(*columns : Symbol | String) : self
@@ -43,7 +44,7 @@ module Rome
     end
 
     def select!(*columns : Symbol | String) : self
-      actual = @selects ||= [] of Symbol | String
+      actual = @selects ||= Selects.new
       columns.each { |name| actual << name }
       self
     end
