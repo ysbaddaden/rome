@@ -1,5 +1,6 @@
 require "pg"
 require "uuid"
+require "uuid/json"
 
 module PG
   module Decoders

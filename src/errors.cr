@@ -4,4 +4,6 @@ module Rome
   class RecordNotFound < Error; end
 
   class ReadOnlyRecord < Error; end
+
+  class MissingAttribute < Error; end
 end

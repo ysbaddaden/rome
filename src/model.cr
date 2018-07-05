@@ -30,29 +30,30 @@ module Rome
       alias PrimaryKeyType = {{type}}
 
       @@primary_key = {{name.id.symbolize}}
-      @{{name.id}} : {{type}} | Nil
 
-      def id : {{type}}
-        @{{name.id}}.not_nil!
-      end
+      {% unless name.id.symbolize == :id %}
+        def id : {{type}}
+          {{name.id}}
+        end
 
-      def id? : {{type}}?
-        @{{name.id}}
-      end
+        def id? : {{type}}?
+          {{name.id}}?
+        end
 
-      def id=(value : {{type}})
-        @{{name.id}} = value
-      end
+        def id=(value : {{type}})
+          self.{{name.id}} = value
+        end
+      {% end %}
 
       {% if %w(Int8 Int16 Int32 Int64).includes?(type.stringify) %}
         @[AlwaysInline]
         protected def set_primary_key_after_create(value : Int)
-          @{{name.id}} = {{type}}.new(value)
+          self.{{name.id}} = {{type}}.new(value)
         end
       {% else %}
         @[AlwaysInline]
         protected def set_primary_key_after_create(value : {{type}})
-          @{{name.id}} = value
+          self.{{name.id}} = value
         end
       {% end %}
 
@@ -63,50 +64,65 @@ module Rome
     end
 
     macro columns(**properties)
-      DB.mapping({{properties}}, strict: false)
+      @attributes = {} of String => ::Rome::Value
 
       {% for key, value in properties %}
+        def {{key}}=(value : {{value[:type]}}{% if value[:nilable] %}?{% end %})
+          @attributes[{{key.stringify}}] = value
+        end
+
+        def {{key}} : {{value[:type]}}{% if value[:nilable] %}?{% end %}
+          {% if value[:nilable] %}
+            @attributes[{{key.stringify}}]?.as({{value[:type]}}?)
+          {% else %}
+            @attributes
+              .fetch({{key.stringify}}) { raise ::Rome::MissingAttribute.new("required attribute '{{key}}' is missing") }
+              .as({{value[:type]}})
+          {% end %}
+        end
+
+        def {{key}}? : {{value[:type]}}?
+          @attributes[{{key.stringify}}]?.as({{value[:type]}}?)
+        end
+
         {% if value[:primary] %}
           set_primary_key({{key}}, {{value[:type]}})
         {% end %}
       {% end %}
 
+      def initialize(rs : DB::ResultSet)
+        self.attributes = rs
+      end
+
       def initialize(
         {% for key, value in properties %}
-          {% unless value[:default] || value[:nilable] || value[:primary] %}
-            @{{key}} : {{value[:type]}},
-          {% end %}
-        {% end %}
-
-        {% for key, value in properties %}
           {% if value[:default] %}
-            {% if value[:nilable] || value[:primary] %}
-              @{{key}} : {{value[:type]}} | Nil = {{value[:default]}},
-            {% else %}
-              @{{key}} : {{value[:type]}} = {{value[:default]}},
-            {% end %}
-          {% elsif value[:nilable] || value[:primary] %}
-            @{{key}} : {{value[:type]}} | Nil = nil,
+            {{key}} : {{value[:type]}}? = {{value[:default]}},
+          {% else %}
+            {{key}} : {{value[:type]}}? = nil,
           {% end %}
         {% end %}
       )
+        {% for key, value in properties %}
+          @attributes[{{key.stringify}}] = {{key}} unless {{key}}.nil?
+        {% end %}
       end
 
       def attributes : NamedTuple
         {
           {% for key, value in properties %}
-            {{key}}: @{{key}},
+            {{key}}: self.{{key}},
           {% end %}
         }
       end
 
-      def attributes=(attrs : NamedTuple) : Nil
+      def attributes=(args : NamedTuple) : Nil
         {% for key, value in properties %}
-          if attrs.has_key?({{key.symbolize}})
-            {% if value[:nilable] || value[:primary_key] %}
-              @{{key}} = attrs[{{key.symbolize}}]?
+          if args.has_key?({{key.stringify}})
+            {% if value[:nilable] %}
+              @attributes[{{key.stringify}}] = args[{{key.stringify}}]?
             {% else %}
-              @{{key}} = attrs[{{key.symbolize}}]?.not_nil!
+              @attributes[{{key.stringify}}] = args[{{key.stringify}}]?.not_nil!
             {% end %}
           end
         {% end %}
@@ -117,16 +133,17 @@ module Rome
           case column_name
             {% for key, value in properties %}
             when {{key.stringify}}
-              {% if value[:converter] %}
-                @{{key}} = {{value[:converter]}}.from_rs(rs)
-              {% elsif value[:nilable] || value[:default] != nil %}
-                @{{key}} = rs.read(::Union({{value[:type]}} | Nil))
-              {% else %}
-                @{{key}} = rs.read({{value[:type]}})
-              {% end %}
+              @attributes[{{key.stringify}}] =
+                {% if value[:converter] %}
+                  {{value[:converter]}}.from_rs(rs)
+                {% elsif value[:nilable] %}
+                  rs.read({{value[:type]}}?)
+                {% else %}
+                  rs.read({{value[:type]}})
+                {% end %}
             {% end %}
           else
-            rs.read # skip
+            @attributes[column_name] = rs.read(::Rome::Value)
           end
         end
       end
@@ -134,7 +151,7 @@ module Rome
       def to_h : Hash
         {
           {% for key, value in properties %}
-            {{key.stringify}} => @{{key}},
+            {{key.stringify}} => @attributes[{{key.stringify}}]?,
           {% end %}
         }
       end
@@ -150,7 +167,7 @@ module Rome
       def to_json(json : JSON::Builder) : Nil
         json.object do
           {% for key, value in properties %}
-            json.field {{key.stringify}}, @{{key.id}}
+            json.field {{key.stringify}}, @attributes[{{key.stringify}}]?
           {% end %}
         end
       end

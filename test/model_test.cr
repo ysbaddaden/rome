@@ -51,18 +51,10 @@ module Rome
     end
 
     def test_attributes
-      assert_equal({id: nil}, Foo.new.attributes)
       assert_equal({id: 1}, Foo.new(id: 1).attributes)
 
       uuid = UUID.random
-      assert_equal({uuid: nil}, Bar.new.attributes)
       assert_equal({uuid: uuid}, Bar.new(uuid: uuid).attributes)
-
-      assert_equal({
-        id: nil,
-        name: "A",
-        about: nil
-      }, Qux.new(name: "A").attributes)
 
       assert_equal({
         id: 2,

@@ -1,5 +1,6 @@
 require "mysql"
 require "uuid"
+require "uuid/json"
 
 abstract struct MySql::Type
   def self.type_for(t : ::UUID.class)
