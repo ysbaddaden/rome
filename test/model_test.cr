@@ -96,6 +96,30 @@ module Rome
       }, Qux.new(name: "B", about: "C", id: 2).to_h)
     end
 
+    def test_from_json
+      foo = Foo.from_json(%({"id":1234}))
+      assert_equal 1234, foo.id
+
+      bar = Bar.from_json(%({"uuid":"de7c018a-122f-4bab-ac7f-ee2d3e7555d4"}))
+      assert_equal UUID.new("de7c018a-122f-4bab-ac7f-ee2d3e7555d4"), bar.uuid
+
+      qux = Qux.from_json(%({"id":12}))
+      assert_equal 12, qux.id
+      assert_nil qux.name?
+      assert_nil qux.about
+
+      qux = Qux.from_json <<-JSON
+      {
+        "id": 123,
+        "name": "QUX",
+        "about": "description"
+      }
+      JSON
+      assert_equal 123, qux.id
+      assert_equal "QUX", qux.name
+      assert_equal "description", qux.about
+    end
+
     def test_to_json
       qux = Qux.new(name: "B", about: "C", id: 2)
 

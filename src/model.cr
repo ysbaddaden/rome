@@ -1,3 +1,5 @@
+require "json"
+
 module Rome
   abstract class Model
     macro inherited
@@ -154,6 +156,55 @@ module Rome
             {{key.stringify}} => @attributes[{{key.stringify}}]?,
           {% end %}
         }
+      end
+
+      def self.new(%pull : JSON::PullParser) : self
+        {% for key, value in properties %}
+          {{key}} = nil
+        {% end %}
+
+        %location = %pull.location
+        begin
+          %pull.read_begin_object
+        rescue %ex : ::JSON::ParseException
+          raise ::JSON::MappingError.new(%ex.message, self.class.to_s, nil, *%location, %ex)
+        end
+
+        until %pull.kind == :end_object
+          %location = %pull.location
+          %name = %pull.read_object_key
+
+          case %name
+          {% for key, value in properties %}
+          when {{key.stringify}}
+            {{key}} = begin
+              {% if value[:nilable] %} %pull.read_null_or do {% end %}
+
+              {% if value[:converter] %}
+                {{value[:converter]}}.from_json(%pull)
+              {% else %}
+                ::Union({{value[:type]}}).new(%pull)
+              {% end %}
+
+              {% if value[:nilable] %} end {% end %}
+            rescue %ex : ::JSON::ParseException
+              raise ::JSON::MappingError.new(%ex.message, self.class.to_s, %name, *%location, %ex)
+            end
+          {% end %}
+          else
+            self.on_unknown_json_attribute(%pull, %name, %location)
+          end
+        end
+
+        new(
+          {% for key, value in properties %}
+            {{key}}: {{key}},
+          {% end %}
+        )
+      end
+
+      protected def self.on_unknown_json_attribute(pull, name, location)
+        pull.skip
       end
 
       def to_json(indent = nil) : String
