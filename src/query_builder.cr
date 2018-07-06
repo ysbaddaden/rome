@@ -30,8 +30,8 @@ module Rome
     property selects : Selects?
     property conditions : Conditions?
     property orders : Orders?
-    property limit : Int32?
-    property offset : Int32?
+    property limit : Int32 = -1
+    property offset : Int32 = -1
 
     def initialize(@table_name, @primary_key = "")
       @distinct = false
@@ -55,6 +55,14 @@ module Rome
       return unless orders = @orders
       return if orders.empty?
       orders
+    end
+
+    def limit? : Int32?
+      @limit unless @limit == -1
+    end
+
+    def offset? : Int32?
+      @offset unless @offset == -1
     end
 
     def select(*columns : Symbol | String) : self
@@ -264,8 +272,8 @@ module Rome
         when :select then @selects = nil
         when :where then @conditions = nil
         when :order then @orders = nil
-        when :limit then @limit = nil
-        when :offset then @offset = nil
+        when :limit then @limit = -1
+        when :offset then @offset = -1
         else raise "unknown property to unscope: #{arg}"
         end
       end

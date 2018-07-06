@@ -50,17 +50,186 @@ module Rome
       assert_nil Bar.new.id?
     end
 
-    def test_attributes
-      assert_equal({id: 1}, Foo.new(id: 1).attributes)
+    def test_initializers
+      qux = Qux.new
+      assert_nil qux.id?
+      assert_nil qux.name?
+      assert_nil qux.about?
 
-      uuid = UUID.random
-      assert_equal({uuid: uuid}, Bar.new(uuid: uuid).attributes)
+      qux = Qux.new(id: 1)
+      assert_equal 1, qux.id?
+      assert_nil qux.name?
+      assert_nil qux.about?
 
-      assert_equal({
-        id: 2,
-        name: "B",
-        about: "C"
-      }, Qux.new(name: "B", about: "C", id: 2).attributes)
+      qux = Qux.new(id: 1, about: "description")
+      assert_equal 1, qux.id?
+      assert_nil qux.name?
+      assert_equal "description", qux.about?
+    end
+
+    def test_getters_with_missing_attributes
+      qux = Qux.new
+
+      assert_raises(MissingAttribute) { qux.id }
+      assert_nil qux.id?
+
+      assert_raises(MissingAttribute) { qux.name }
+      assert_nil qux.name?
+
+      assert_nil qux.about
+      assert_nil qux.about?
+    end
+
+    def test_getters_with_attributes
+      qux = Qux.new(id: 1, name: "N", about: "A")
+      assert_equal 1, qux.id
+      assert_equal 1, qux.id?
+
+      assert_equal "N", qux.name
+      assert_equal "N", qux.name?
+
+      assert_equal "A", qux.about
+      assert_equal "A", qux.about?
+    end
+
+    def test_accessors_with_missing_attributes
+      qux = Qux.new
+
+      assert_raises(MissingAttribute) { qux[:id] }
+      assert_raises(MissingAttribute) { qux["id"] }
+      assert_nil qux[:id]?
+      assert_nil qux["id"]?
+
+      assert_raises(MissingAttribute) { qux[:name] }
+      assert_raises(MissingAttribute) { qux["name"] }
+      assert_nil qux[:name]?
+      assert_nil qux["name"]?
+
+      assert_nil qux[:about]
+      assert_nil qux["about"]
+      assert_nil qux[:about]?
+      assert_nil qux["about"]?
+
+      assert_raises(MissingAttribute) { qux["extra"] }
+      assert_nil qux["extra"]?
+    end
+
+    def test_accessors_with_attributes
+      qux = Qux.new(id: 1, name: "N", about: "A")
+      qux.extra_attributes["extra"] = "all"
+
+      assert_equal 1, qux[:id]
+      assert_equal 1, qux["id"]
+      assert_equal 1, qux[:id]?
+      assert_equal 1, qux["id"]?
+
+      assert_equal "N", qux[:name]
+      assert_equal "N", qux["name"]
+      assert_equal "N", qux[:name]?
+      assert_equal "N", qux["name"]?
+
+      assert_equal "A", qux[:about]
+      assert_equal "A", qux["about"]
+      assert_equal "A", qux[:about]?
+      assert_equal "A", qux["about"]?
+
+      assert_equal "all", qux["extra"]
+      assert_equal "all", qux["extra"]?
+    end
+
+    def test_changed?
+      qux = Qux.new
+      refute qux.changed?
+      refute qux.id_changed?
+      refute qux.name_changed?
+
+      qux.name = "ABC"
+      assert qux.changed?
+      refute qux.id_changed?
+      assert qux.name_changed?
+
+      qux.changes_applied
+      refute qux.changed?
+      refute qux.name_changed?
+
+      qux.name = "ABC"
+      refute qux.changed?
+      refute qux.name_changed?
+    end
+
+    def test_dirty_attributes
+      qux = Qux.new(name: "ABC")
+      assert_nil qux.id_was
+      assert_nil qux.name_was
+      assert_equal({nil, nil}, qux.id_change)
+      assert_equal({nil, "ABC"}, qux.name_change)
+
+      qux.name = "DEF"
+      assert_nil qux.id_was
+      assert_equal "ABC", qux.name_was
+      assert_equal({"ABC", "DEF"}, qux.name_change)
+
+      qux.name = "GHI"
+      assert_equal "ABC", qux.name_was
+      assert_equal({"ABC", "GHI"}, qux.name_change)
+    end
+
+    def test_will_change!
+      qux = Qux.new(name: "A")
+      refute qux.changed?
+      refute qux.id_changed?
+      refute qux.name_changed?
+
+      qux.name_will_change!
+      assert qux.changed?
+      refute qux.id_changed?
+      assert qux.name_changed?
+      assert_equal "A", qux.name_was
+    end
+
+    def test_restore_attributes
+      qux = Qux.new(id: 1, name: "N", about: "A")
+      qux.attributes = {id: 2, name: "M", about: "B"}
+
+      qux.restore_attributes
+      refute qux.changed?
+      assert_equal 1, qux.id
+      assert_equal "N", qux.name
+      assert_equal "A", qux.about
+    end
+
+    def test_changes_applied
+      qux = Qux.new(id: 1, name: "ABC", about: "foo")
+      qux.attributes = {id: 2, name: "DEF", about: "bar"}
+      assert qux.changed?
+
+      qux.changes_applied
+      refute qux.changed?
+
+      assert_nil qux.id_was
+      assert_nil qux.name_was
+      assert_nil qux.about_was
+
+      assert_equal 2, qux.id
+      assert_equal "DEF", qux.name
+      assert_equal "bar", qux.about
+    end
+
+    def test_clear_changes_information
+      qux = Qux.new(id: 1, name: "ABC", about: "foo")
+      qux.attributes = {id: 2, name: "DEF", about: "bar"}
+      assert qux.changed?
+
+      qux.clear_changes_information
+      refute qux.changed?
+
+      assert_equal 2, qux.id
+      assert_equal "DEF", qux.name
+      assert_equal "bar", qux.about
+
+      assert_nil qux.id_was
+      assert_nil qux.name_was
+      assert_nil qux.about_was
     end
 
     def test_assign_attributes
@@ -73,6 +242,28 @@ module Rome
       qux.attributes = {id: 456}
       assert_equal 456, qux.id
       assert_equal "ABC", qux.name
+    end
+
+    def test_attributes_for_create
+      assert_raises(MissingAttribute) { Qux.new.attributes_for_create }
+      assert_equal({
+        :id => nil,
+        :name => "A",
+        :about => nil,
+      }, Qux.new(name: "A").attributes_for_create)
+    end
+
+    def test_attributes_for_update
+      qux = Qux.new(id: 1, name: "B")
+      qux.new_record = false
+
+      assert_nil qux.attributes_for_update
+
+      qux.name = "C"
+      assert_equal({ :name => "C" }, qux.attributes_for_update)
+
+      qux.about = "description"
+      assert_equal({ :name => "C", :about => "description" }, qux.attributes_for_update)
     end
 
     def test_to_h

@@ -36,28 +36,28 @@ module Rome
       b1 = QueryBuilder.new("foos")
       b2 = b1.limit(50)
 
-      assert_nil b1.limit
-      assert_equal 50, b2.limit
+      assert_nil b1.limit?
+      assert_equal 50, b2.limit?
     end
 
     def test_limit!
       b = QueryBuilder.new("foos")
       b.limit!(50)
-      assert_equal 50, b.limit
+      assert_equal 50, b.limit?
     end
 
     def test_offset
       b1 = QueryBuilder.new("foos")
       b2 = b1.offset(200)
 
-      assert_nil b1.offset
-      assert_equal 200, b2.offset
+      assert_nil b1.offset?
+      assert_equal 200, b2.offset?
     end
 
     def test_offset!
       b = QueryBuilder.new("foos")
       b.offset!(200)
-      assert_equal 200, b.offset
+      assert_equal 200, b.offset?
     end
 
     def test_where
@@ -232,38 +232,38 @@ module Rome
       refute_nil b.selects?
       refute_nil b.conditions?
       refute_nil b.orders?
-      refute_nil b.limit
-      refute_nil b.offset
+      refute_nil b.limit?
+      refute_nil b.offset?
 
       assert_nil b1.selects?
       refute_nil b1.conditions?
       refute_nil b1.orders?
-      refute_nil b1.limit
-      refute_nil b1.offset
+      refute_nil b1.limit?
+      refute_nil b1.offset?
 
       refute_nil b2.selects?
       assert_nil b2.conditions?
       refute_nil b2.orders?
-      refute_nil b2.limit
-      refute_nil b2.offset
+      refute_nil b2.limit?
+      refute_nil b2.offset?
 
       refute_nil b3.selects?
       refute_nil b3.conditions?
       assert_nil b3.orders?
-      refute_nil b3.limit
-      refute_nil b3.offset
+      refute_nil b3.limit?
+      refute_nil b3.offset?
 
       refute_nil b4.selects?
       refute_nil b4.conditions?
       refute_nil b4.orders?
-      assert_nil b4.limit
-      refute_nil b4.offset
+      assert_nil b4.limit?
+      refute_nil b4.offset?
 
       refute_nil b5.selects?
       refute_nil b5.conditions?
       refute_nil b5.orders?
-      refute_nil b5.limit
-      assert_nil b5.offset
+      refute_nil b5.limit?
+      assert_nil b5.offset?
     end
 
     def test_unscope!
@@ -278,26 +278,26 @@ module Rome
       assert_nil b.selects?
       refute_nil b.conditions?
       refute_nil b.orders?
-      refute_nil b.limit
-      refute_nil b.offset
+      refute_nil b.limit?
+      refute_nil b.offset?
 
       b.unscope!(:where)
       assert_nil b.conditions?
       refute_nil b.orders?
-      refute_nil b.limit
-      refute_nil b.offset
+      refute_nil b.limit?
+      refute_nil b.offset?
 
       b.unscope!(:order)
       assert_nil b.orders?
-      refute_nil b.limit
-      refute_nil b.offset
+      refute_nil b.limit?
+      refute_nil b.offset?
 
       b.unscope!(:limit)
-      assert_nil b.limit
-      refute_nil b.offset
+      assert_nil b.limit?
+      refute_nil b.offset?
 
       b.unscope!(:offset)
-      assert_nil b.offset
+      assert_nil b.offset?
     end
   end
 end

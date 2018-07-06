@@ -11,7 +11,7 @@ module Rome
       self.class.quote(name, io)
     end
 
-    def insert(attributes : Hash | NamedTuple) : Nil
+    def insert(attributes : Hash) : Nil
       rs = Rome.connection &.exec(*insert_sql(attributes))
       yield rs.last_insert_id
     end
@@ -248,10 +248,10 @@ module Rome
     end
 
     protected def build_limit(io) : Nil
-      if limit = builder.limit
+      if limit = builder.limit?
         io << " LIMIT " << limit
       end
-      if offset = builder.offset
+      if offset = builder.offset?
         io << " OFFSET " << offset
       end
     end

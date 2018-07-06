@@ -14,40 +14,49 @@ module Rome
         record.updated_at ||= Time.now
       end
 
-      attrs = record.to_h
-      attrs.delete(primary_key.to_s) unless record.id?
+      attributes = record.attributes_for_create
+      attributes.delete(primary_key) unless record.id?
 
       builder = QueryBuilder.new(table_name, primary_key.to_s)
       adapter = Rome.adapter_class.new(builder)
 
-      adapter.insert(attrs) do |id|
+      adapter.insert(attributes) do |id|
         record.set_primary_key_after_create(id) unless record.id?
         record.new_record = false
       end
 
+      record.changes_applied
       record
     end
 
     def save : Nil
       if persisted?
-        update(**attributes)
+        update
       else
         self.class.create(self)
       end
     end
 
-    def update(**attrs) : Nil
+    def update(**attributes) : self
       raise ReadOnlyRecord.new if deleted?
 
-      self.attributes = attrs
-
-      if self.responds_to?(:updated_at=)
-        self.updated_at = Time.now
+      unless attributes.empty?
+        self.attributes = attributes
       end
 
-      self.class
-        .where({ self.class.primary_key => id })
-        .update(**attributes)
+      if changed?
+        if self.responds_to?(:updated_at=)
+          self.updated_at = Time.now
+        end
+
+        self.class
+          .where({ self.class.primary_key => id })
+          .update(attributes_for_update.not_nil!)
+
+        changes_applied
+      end
+
+      self
     end
 
     def delete : Nil
@@ -68,6 +77,7 @@ module Rome
       end
       raise RecordNotFound.new unless found
 
+      clear_changes_information
       self
     end
   end

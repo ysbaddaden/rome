@@ -14,6 +14,7 @@ module Rome
       assert_equal Group, typeof(Group.create(name: "PLANET EXPRESS", description: "The Worst Deliveries"))
 
       group = Group.create(id: 0, name: "PLANET EXPRESS")
+      refute group.changed?
       assert_equal 0, group.id
       assert_equal "PLANET EXPRESS", group.name
       assert_nil group.description
@@ -35,16 +36,17 @@ module Rome
     def test_save
       # 1. create
       group = Group.new(name: "A")
-      assert group.new_record?
+      group.description = "D"
 
       group.save
-      refute group.new_record?
+      refute group.changed?
       refute_nil group.id?
 
       # 2. update
       group.name = "astronomy"
       group.description = "domine"
       group.save
+      refute group.changed?
 
       group = Group.find(group.id)
       assert_equal "astronomy", group.name
@@ -64,12 +66,26 @@ module Rome
       assert Group.all.none?(&.new_record?)
     end
 
+    def test_persisted?
+      group = Group.new(name: "A")
+      refute group.persisted?
+
+      group.save
+      assert group.persisted?
+
+      group = Group.find(group.id)
+      assert group.persisted?
+
+      assert Group.all.all?(&.persisted?)
+    end
+
     def test_update
       group = Group.create(name: "A")
 
       group.update(name: "B", description: "a few words")
       assert_equal "B", group.name
       assert_equal "a few words", group.description
+      refute group.changed?
 
       group = Group.find(group.id)
       assert_equal "B", group.name
@@ -93,6 +109,7 @@ module Rome
       assert_equal "reloaded", group.name
       refute group.new_record?
       assert group.persisted?
+      refute group.changed?
 
       Group.find(group.id).delete
       assert_raises(RecordNotFound) { group.reload }

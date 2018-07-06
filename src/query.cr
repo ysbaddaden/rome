@@ -46,28 +46,15 @@ module Rome
     end
 
     def self.find_all_by_sql(sql : String, *args) : Array(self)
-      Rome.connection &.query_all(sql, *args) do |rs|
-        record = new(rs)
-        record.new_record = false
-        record
-      end
+      Rome.connection &.query_all(sql, *args) { |rs| new(rs) }
     end
 
     def self.find_one_by_sql(sql : String, *args) : self
-      found = Rome.connection &.query_one?(sql, *args) do |rs|
-        record = new(rs)
-        record.new_record = false
-        record
-      end
-      found || raise RecordNotFound.new
+      Rome.connection &.query_one?(sql, *args) { |rs| new(rs) } || raise RecordNotFound.new
     end
 
     def self.find_one_by_sql?(sql : String, *args) : self?
-      Rome.connection &.query_one?(sql, *args) do |rs|
-        record = new(rs)
-        record.new_record = false
-        record
-      end
+      Rome.connection &.query_one?(sql, *args) { |rs| new(rs) }
     end
 
     def self.take : self

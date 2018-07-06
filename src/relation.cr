@@ -20,11 +20,7 @@ module Rome
     end
 
     def to_a
-      @cache ||= Rome.adapter_class.new(@builder).select_all do |rs|
-        record = T.new(rs)
-        record.new_record = false
-        record
-      end
+      @cache ||= Rome.adapter_class.new(@builder).select_all { |rs| T.new(rs) }
     end
 
     def none : self
@@ -51,12 +47,7 @@ module Rome
 
     def find?(id : T::PrimaryKeyType) : T?
       builder = @builder.where({ T.primary_key => id }).limit(1)
-
-      Rome.adapter_class.new(builder).select_one do |rs|
-        record = T.new(rs)
-        record.new_record = false
-        record
-      end
+      Rome.adapter_class.new(builder).select_one { |rs| T.new(rs) }
     end
 
     def find_by(**args) : T
@@ -65,12 +56,7 @@ module Rome
 
     def find_by?(**args) : T?
       builder = @builder.where(**args).limit(1)
-
-      Rome.adapter_class.new(builder).select_one do |rs|
-        record = T.new(rs)
-        record.new_record = false
-        record
-      end
+      Rome.adapter_class.new(builder).select_one { |rs| T.new(rs) }
     end
 
     def exists? : Bool
@@ -97,12 +83,7 @@ module Rome
         cache.first?
       else
         builder = @builder.limit(1)
-
-        Rome.adapter_class.new(builder).select_one do |rs|
-          record = T.new(rs)
-          record.new_record = false
-          record
-        end
+        Rome.adapter_class.new(builder).select_one { |rs|  T.new(rs) }
       end
     end
 
@@ -116,12 +97,7 @@ module Rome
       else
         builder = @builder.limit(1)
         builder.order!({ T.primary_key => :asc }) unless builder.orders?
-
-        Rome.adapter_class.new(builder).select_one do |rs|
-          record = T.new(rs)
-          record.new_record = false
-          record
-        end
+        Rome.adapter_class.new(builder).select_one { |rs| T.new(rs) }
       end
     end
 
@@ -135,12 +111,7 @@ module Rome
       else
         builder = @builder.limit(1)
         builder.order!({ T.primary_key => :desc }) unless builder.orders?
-
-        Rome.adapter_class.new(builder).select_one do |rs|
-          record = T.new(rs)
-          record.new_record = false
-          record
-        end
+        Rome.adapter_class.new(builder).select_one { |rs| T.new(rs) }
       end
     end
 
@@ -212,7 +183,7 @@ module Rome
       Rome.adapter_class.new(builder).scalar
     end
 
-    def update(**attributes) : Nil
+    def update(attributes : Hash) : Nil
       Rome.adapter_class.new(@builder).update(attributes)
     end
 
@@ -375,9 +346,7 @@ module Rome
       rs = @rs ||= query
 
       if rs.move_next
-        record = T.new(rs)
-        record.new_record = false
-        record
+        T.new(rs)
       else
         @stop = true
         stop
