@@ -39,11 +39,17 @@ module Rome
       end
     end
 
-    def changes_applied
+    def changes : Hash(Symbol, Tuple(::Rome::Value, ::Rome::Value))
+      changes = {} of Symbol => {::Rome::Value, ::Rome::Value}
+      @changed_attributes.try(&.each { |k, v| changes[k] = {v, self[k]?} })
+      changes
+    end
+
+    def changes_applied : Nil
       @changed_attributes.try(&.clear)
     end
 
-    def clear_changes_information
+    def clear_changes_information : Nil
       @changed_attributes.try(&.clear)
     end
 
@@ -94,10 +100,14 @@ module Rome
       end
     end
 
-    macro columns(**properties)
+    macro columns(properties, strict = false)
       {% for key, opts in properties %}
+        {% if strict %}
+          {% opts[:nilable] = true if opts[:primary] %}
+        {% end %}
         {% opts[:nilable_type] = "::Union(#{opts[:type]}, Nil)".id %}
         {% opts[:type] = opts[:nilable_type] if opts[:nilable] %}
+        {% opts[:ivar_type] = strict ? opts[:type] : opts[:nilable_type] %}
       {% end %}
 
       def self.new(%rs : ::DB::ResultSet)
@@ -137,21 +147,30 @@ module Rome
       end
 
       def initialize(
+        {% if strict %}
+          {% for key, opts in properties %}
+            {% unless opts[:nilable] || opts[:default] %}
+              @{{key}} : {{opts[:ivar_type]}},
+            {% end %}
+          {% end %}
+        {% end %}
         {% for key, opts in properties %}
-          @{{key}} : {{opts[:nilable_type]}} = {{opts[:default] || "nil".id }},
+          {% if !strict || opts[:nilable] || opts[:default] %}
+            @{{key}} : {{opts[:ivar_type]}} = {{opts[:default] || "nil".id }},
+          {% end %}
         {% end %}
       )
       end
 
       {% for key, opts in properties %}
-        @{{key}} : {{opts[:nilable_type]}}
+        @{{key}} : {{opts[:ivar_type]}}
 
-        def {{key}}=(value : {{opts[:nilable_type]}})
+        def {{key}}=(value : {{opts[:type]}}) : {{opts[:type]}}
           {{key}}_will_change! unless value == @{{key}}
           @{{key}} = value
         end
 
-        def {{key}} : {{opts[:nilable_type]}}
+        def {{key}} : {{opts[:type]}}
           @{{key}} {% unless opts[:nilable] %}||
             raise ::Rome::MissingAttribute.new("required attribute #{self.class.name}\#{{key}} is missing")
           {% end %}
@@ -384,6 +403,10 @@ module Rome
           end
         end
       end
+    end
+
+    macro columns(**properties)
+      ::Rome::Model.columns({{properties}}, strict: false)
     end
   end
 end

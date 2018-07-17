@@ -174,6 +174,20 @@ module Rome
       assert_equal({"ABC", "GHI"}, qux.name_change)
     end
 
+    def test_changes
+      qux = Qux.new(name: "ABC")
+      assert_empty qux.changes
+
+      qux.attributes = {
+        id: 123,
+        name: "DEF"
+      }
+      assert_equal({
+        :id => {nil, 123},
+        :name => {"ABC", "DEF"}
+      }, qux.changes)
+    end
+
     def test_will_change!
       qux = Qux.new(name: "A")
       refute qux.changed?
