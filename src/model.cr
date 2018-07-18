@@ -1,9 +1,9 @@
-require "./query/methods"
+require "./query"
 require "./serialization"
 
 module Rome
   abstract class Model
-    extend Query::Methods
+    extend Query
     include Serialization
 
     macro inherited

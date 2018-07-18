@@ -46,24 +46,24 @@ module Rome
     end
 
     def test_all
-      assert_instance_of Relation(User), User.all
-      assert_instance_of Relation(Group), Group.all
+      assert_instance_of Collection(User), User.all
+      assert_instance_of Collection(Group), Group.all
 
       assert_instance_of Array(User), User.all.to_a
       assert_instance_of Array(Group), Group.all.to_a
     end
 
     def test_none
-      assert_equal Relation(User), typeof(User.none)
+      assert_equal Collection(User), typeof(User.none)
       assert_equal [] of User, User.none.to_a
 
-      assert_equal Relation(Group), typeof(Group.none)
+      assert_equal Collection(Group), typeof(Group.none)
       assert_equal [] of Group, Group.none.to_a
 
-      assert_equal Relation(User), typeof(User.select("*").none)
+      assert_equal Collection(User), typeof(User.select("*").none)
       assert_equal [] of User, User.select("*").none.to_a
 
-      assert_equal Relation(Group), typeof(Group.select("*").none)
+      assert_equal Collection(Group), typeof(Group.select("*").none)
       assert_equal [] of Group, Group.select("*").none.to_a
 
       assert_nil Group.none.find?(group_id)

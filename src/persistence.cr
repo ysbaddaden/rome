@@ -1,5 +1,13 @@
 module Rome
   abstract class Model
+    # Creates a record in database with the specified attributes. For example:
+    # ```
+    # user = User.create(name: "julien", group_id: 2)
+    # # => User(id: 1, name: "julien", group_id: 2)
+    # ```
+    #
+    # Automatically fills the `created_at` and `updated_at` columns if they
+    # exist and are `nil`.
     def self.create(**args) : self
       create new(**args)
     end
@@ -29,6 +37,15 @@ module Rome
       record
     end
 
+    # Persists the record into the database. Either creates a new row or
+    # updates an existing row.
+    # ```
+    # user = User.new(name: "julien", group_id: 2)
+    # user.save # => INSERT
+    #
+    # user.name = "alice"
+    # user.save # => UPDATE
+    # ```
     def save : Nil
       if persisted?
         update
@@ -37,6 +54,12 @@ module Rome
       end
     end
 
+    # Updates a record into the database, optionally setting the specified
+    # *attributes* if present.
+    #
+    # Automatically updates the `updated_at` column if it exists.
+    #
+    # Raises a `ReadOnlyRecord` exception if the record has been deleted.
     def update(**attributes) : self
       raise ReadOnlyRecord.new if deleted?
 
@@ -59,6 +82,7 @@ module Rome
       self
     end
 
+    # Deletes the record from the database. Marks the record as deleted.
     def delete : Nil
       self.class
         .where({ self.class.primary_key => id })
@@ -66,6 +90,8 @@ module Rome
       self.deleted = true
     end
 
+    # Reloads a record from the database. This will reset all changed attributes
+    # and all change information.
     def reload : self
       builder = Query::Builder.new(self.class.table_name)
         .where!({ self.class.primary_key => id })
