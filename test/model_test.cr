@@ -6,13 +6,13 @@ module Rome
       self.table_name = "foo"
 
       columns(
-        id: {type: Int32, primary: true},
+        id: {type: Int32, primary_key: true},
       )
     end
 
     class Bar < Model
       columns(
-        uuid: {type: UUID, primary: true},
+        uuid: {type: UUID, primary_key: true},
       )
     end
 
@@ -20,9 +20,9 @@ module Rome
       self.table_name = "qux"
 
       columns(
-        id:    {type: Int32, primary: true},
+        id:    {type: Int32, primary_key: true},
         name:  {type: String},
-        about: {type: String, nilable: true},
+        about: {type: String, null: true},
       )
     end
 

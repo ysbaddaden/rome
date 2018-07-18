@@ -17,7 +17,7 @@ module Rome
       attributes = record.attributes_for_create
       attributes.delete(primary_key) unless record.id?
 
-      builder = QueryBuilder.new(table_name, primary_key.to_s)
+      builder = Query::Builder.new(table_name, primary_key.to_s)
       adapter = Rome.adapter_class.new(builder)
 
       adapter.insert(attributes) do |id|
@@ -51,7 +51,7 @@ module Rome
 
         self.class
           .where({ self.class.primary_key => id })
-          .update(attributes_for_update.not_nil!)
+          .update_all(attributes_for_update.not_nil!)
 
         changes_applied
       end
@@ -62,12 +62,12 @@ module Rome
     def delete : Nil
       self.class
         .where({ self.class.primary_key => id })
-        .delete
+        .delete_all
       self.deleted = true
     end
 
     def reload : self
-      builder = QueryBuilder.new(self.class.table_name)
+      builder = Query::Builder.new(self.class.table_name)
         .where!({ self.class.primary_key => id })
         .limit!(1)
 

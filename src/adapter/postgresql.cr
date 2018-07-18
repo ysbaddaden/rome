@@ -86,7 +86,7 @@ module Rome
         io << " AND " unless index == 0
 
         case condition
-        when QueryBuilder::Condition
+        when Query::Builder::Condition
           quote(condition.column_name, io)
 
           case value = condition.value
@@ -119,7 +119,7 @@ module Rome
             end
           end
 
-        when QueryBuilder::RawCondition
+        when Query::Builder::RawCondition
           io << "NOT " if condition.not
           io << '('
 

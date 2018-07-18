@@ -1,5 +1,4 @@
 require "./connection"
 require "./errors"
 require "./model"
-require "./query"
 require "./persistence"

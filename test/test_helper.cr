@@ -63,19 +63,19 @@ end
 
 class Group < Rome::Model
   columns(
-    id:          {type: Int32, primary: true},
+    id:          {type: Int32, primary_key: true},
     name:        {type: String},
-    description: {type: String, nilable: true},
+    description: {type: String, null: true},
   )
 end
 
 class User < Rome::Model
   columns(
-    uuid:       {type: UUID, primary: true},
+    uuid:       {type: UUID, primary_key: true},
     group_id:   {type: Int32},
     name:       {type: String},
-    created_at: {type: Time, nilable: true},
-    updated_at: {type: Time, nilable: true},
+    created_at: {type: Time, null: true},
+    updated_at: {type: Time, null: true},
   )
 end
 

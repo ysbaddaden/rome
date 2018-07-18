@@ -198,6 +198,7 @@ module Rome
 
       assert_instance_of Group, Group.last
       assert_instance_of User, User.where(group_id: group_id).order(:name).last
+      assert_instance_of User, User.where(group_id: group_id).order("name ASC, group_id DESC").last
     end
 
     def test_last?
@@ -206,6 +207,7 @@ module Rome
 
       assert_instance_of Group, Group.last?
       assert_instance_of User, User.where(group_id: group_id).order(:name).last?
+      assert_instance_of User, User.where(group_id: group_id).order("name DESC, group_id ASC").last
     end
 
     def test_exists?

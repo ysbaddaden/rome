@@ -2,7 +2,7 @@ module Rome
   alias Value = String | Nil | Bool | Int32 | Int64 | Float32 | Float64 | Time | UUID
 
   # :nodoc:
-  struct QueryBuilder
+  struct Query::Builder
     struct Condition
       getter column_name : Symbol
       getter value : Value | Array(Value)

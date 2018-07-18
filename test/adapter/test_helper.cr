@@ -2,7 +2,7 @@ require "../test_helper"
 
 module Rome
   class AdapterTest < Minitest::Test
-    @builder = QueryBuilder.new("users", "uuid")
+    @builder = Query::Builder.new("users", "uuid")
 
     protected def assert_sql(expected : String, actual, message = nil, file = __FILE__, line = __LINE__)
       assert_equal expected.gsub(/\s+/, ' '), actual[0], message, file, line
