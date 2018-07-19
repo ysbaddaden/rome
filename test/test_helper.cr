@@ -29,12 +29,20 @@ Minitest.after_run do
   Rome.connection do |db|
     db.exec "DROP TABLE IF EXISTS groups;"
     db.exec "DROP TABLE IF EXISTS users;"
+    db.exec "DROP TABLE IF EXISTS authors;"
+    db.exec "DROP TABLE IF EXISTS books;"
+    db.exec "DROP TABLE IF EXISTS suppliers;"
+    db.exec "DROP TABLE IF EXISTS accounts;"
   end
 end
 
 Rome.connection do |db|
   db.exec "DROP TABLE IF EXISTS groups;"
   db.exec "DROP TABLE IF EXISTS users;"
+  db.exec "DROP TABLE IF EXISTS authors;"
+  db.exec "DROP TABLE IF EXISTS books;"
+  db.exec "DROP TABLE IF EXISTS suppliers;"
+  db.exec "DROP TABLE IF EXISTS accounts;"
 
   uri = URI.parse(Rome.database_url)
 
@@ -58,6 +66,34 @@ Rome.connection do |db|
     );
     SQL
 
+    db.exec <<-SQL
+    CREATE TABLE authors (
+      id SERIAL NOT NULL PRIMARY KEY,
+      name VARCHAR NOT NULL
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE books (
+      id SERIAL NOT NULL PRIMARY KEY,
+      author_id INT NOT NULL,
+      name VARCHAR NOT NULL
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE suppliers (
+      id SERIAL NOT NULL PRIMARY KEY
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE accounts (
+      id SERIAL NOT NULL PRIMARY KEY,
+      supplier_id INT NOT NULL
+    );
+    SQL
+
   when "mysql"
     db.exec <<-SQL
     CREATE TABLE groups (
@@ -74,6 +110,34 @@ Rome.connection do |db|
       name VARCHAR(50) NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE authors (
+      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(50) NOT NULL
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE books (
+      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      author_id INT NOT NULL,
+      name VARCHAR(50) NOT NULL
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE suppliers (
+      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE accounts (
+      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      supplier_id INT NOT NULL
     );
     SQL
 
@@ -95,6 +159,35 @@ Rome.connection do |db|
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     SQL
+
+    db.exec <<-SQL
+    CREATE TABLE authors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name VARCHAR(50) NOT NULL
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE books (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      author_id INT NOT NULL,
+      name VARCHAR(50) NOT NULL
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE suppliers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      supplier_id INT
+    );
+    SQL
+
   else
     puts "Unknown database scheme: #{uri.scheme}"
     exit 1
@@ -117,6 +210,36 @@ class User < Rome::Model
     created_at: {type: Time, null: true},
     updated_at: {type: Time, null: true},
   )
+end
+
+class Author < Rome::Model
+  columns(
+    id:   {type: Int32, primary_key: true},
+    name: {type: String},
+  )
+  has_many :books
+end
+
+class Book < Rome::Model
+  columns(
+    id:        {type: Int32, primary_key: true},
+    author_id: {type: Int32},
+    name:      {type: String},
+  )
+  belongs_to :author
+end
+
+class Supplier < Rome::Model
+  columns(id: {type: Int32, primary_key: true})
+  has_one :account
+end
+
+class Account < Rome::Model
+  columns(
+    id: {type: Int32, primary_key: true},
+    supplier_id: {type: Int32},
+  )
+  belongs_to :supplier
 end
 
 1.upto(2) do |group_id|

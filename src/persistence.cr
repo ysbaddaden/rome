@@ -28,9 +28,11 @@ module Rome
       builder = Query::Builder.new(table_name, primary_key.to_s)
       adapter = Rome.adapter_class.new(builder)
 
-      adapter.insert(attributes) do |id|
-        record.set_primary_key_after_create(id) unless record.id?
-        record.new_record = false
+      record.save_associations do
+        adapter.insert(attributes) do |id|
+          record.set_primary_key_after_create(id) unless record.id?
+          record.new_record = false
+        end
       end
 
       record.changes_applied
@@ -65,7 +67,6 @@ module Rome
         where({ primary_key => ids.to_a }).delete_all
       end
     end
-
     # Persists the record into the database. Either creates a new row or
     # updates an existing row.
     # ```
@@ -96,16 +97,17 @@ module Rome
         self.attributes = attributes
       end
 
-      if changed?
-        if self.responds_to?(:updated_at=)
-          self.updated_at = Time.utc
+      save_associations do
+        if changed?
+          if self.responds_to?(:updated_at=)
+            self.updated_at = Time.utc
+          end
+
+          self.class.update(id, attributes_for_update.not_nil!)
         end
-
-        self.class.update(id, attributes_for_update.not_nil!)
-
-        changes_applied
       end
 
+      changes_applied
       self
     end
 
@@ -113,6 +115,16 @@ module Rome
     def delete : Nil
       self.class.delete(id)
       self.deleted = true
+    end
+
+    # Deletes the record and dependent associations from the database.
+    # Marks the record as deleted.
+    def destroy : Nil
+      Rome.transaction do
+        self.class.delete(id)
+        self.deleted = true
+        delete_associations
+      end
     end
 
     # Reloads a record from the database. This will reset all changed attributes

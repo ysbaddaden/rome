@@ -28,6 +28,10 @@ module Rome
         @cache = nil
         to_a
       end
+
+      def cached?
+        !@cache.nil?
+      end
     end
   end
 end
