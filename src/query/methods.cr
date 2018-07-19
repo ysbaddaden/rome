@@ -410,6 +410,26 @@ module Rome
         self
       end
 
+      def where_not(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
+        dup @builder.where_not(conditions)
+      end
+
+      # :nodoc:
+      def where_not!(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
+        @builder.where_not!(conditions)
+        self
+      end
+
+      def where_not(**conditions) : self
+        dup @builder.where_not(**conditions)
+      end
+
+      # :nodoc:
+      def where_not!(**conditions) : self
+        @builder.where_not!(**conditions)
+        self
+      end
+
       # Specify a raw WHERE condition for the query. You can specify arguments as
       # `?` and pass them to the method. For example:
       #

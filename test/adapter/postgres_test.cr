@@ -39,14 +39,6 @@ module Rome
       }, adapter.select_sql)
     end
 
-    def test_select_where_in
-      @builder.where!(id: [1, 3, 4])
-
-      assert_sql({
-        %(SELECT * FROM "users" WHERE "id" IN ($1, $2, $3)), [1, 3, 4],
-      }, adapter.select_sql)
-    end
-
     def test_select_where_not
       @builder.where_not!(name: "tom")
       @builder.where_not!({ :name => "alice", :group_id => 1 })
@@ -62,6 +54,40 @@ module Rome
 
       assert_sql({
         %(SELECT * FROM "users" WHERE "name" = $1 AND "group_id" = $2), ["tom", 1]
+      }, adapter.select_sql)
+    end
+
+    def test_select_where_in
+      @builder.where!(id: [1, 3, 4])
+
+      assert_sql({
+        %(SELECT * FROM "users" WHERE "id" IN ($1, $2, $3)), [1, 3, 4],
+      }, adapter.select_sql)
+    end
+
+    def test_select_where_not_in
+      @builder.where_not!(id: [1, 3, 4])
+
+      assert_sql({
+        %(SELECT * FROM "users" WHERE "id" NOT IN ($1, $2, $3)), [1, 3, 4],
+      }, adapter.select_sql)
+    end
+
+    def test_select_where_regex
+      @builder.where!(name: /jul/)
+      @builder.where!(name: /a[bc]/i)
+      assert_sql({
+        %(SELECT * FROM "users" WHERE "name" ~ $1 AND "name" ~* $2),
+        ["jul", "a[bc]"]
+      }, adapter.select_sql)
+    end
+
+    def test_select_where_not_regex
+      @builder.where_not!(name: /jul/)
+      @builder.where_not!(name: /a[bc]/i)
+      assert_sql({
+        %(SELECT * FROM "users" WHERE "name" !~ $1 AND "name" !~* $2),
+        ["jul", "a[bc]"]
       }, adapter.select_sql)
     end
 

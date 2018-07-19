@@ -183,10 +183,9 @@ module Rome
 
         case condition
         when Query::Builder::Condition
-          quote(condition.column_name, io)
-
           case value = condition.value
           when Array(Value)
+            quote(condition.column_name, io)
             if condition.not
               io << " NOT IN ("
             else
@@ -200,13 +199,18 @@ module Rome
             args.concat(value)
 
           when nil
+            quote(condition.column_name, io)
             if condition.not
               io << " IS NOT NULL"
             else
               io << " IS NULL"
             end
 
+          when Regex
+            build_where_regex(condition, io, args)
+
           else
+            quote(condition.column_name, io)
             args << value
             if condition.not
               io << " <> ?"
@@ -224,6 +228,14 @@ module Rome
           end
         end
       end
+    end
+
+    def build_where_regex(condition, io, args)
+      args << condition.value.as(Regex).source
+      io << "NOT (" if condition.not
+      quote(condition.column_name, io)
+      io << " REGEXP ?"
+      io << ')' if condition.not
     end
 
     protected def build_order_by(io) : Nil

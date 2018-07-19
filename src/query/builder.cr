@@ -5,7 +5,7 @@ module Rome
   struct Query::Builder
     struct Condition
       getter column_name : Symbol
-      getter value : Value | Array(Value)
+      getter value : Value | Regex | Array(Value)
       property not : Bool
 
       def initialize(@column_name, @value, @not = false)
@@ -122,13 +122,13 @@ module Rome
       @not = false
     end
 
-    def where(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
+    def where(conditions : Hash(Symbol, Value | Regex | Array(Value)) | NamedTuple) : self
       builder = dup
       builder.conditions = @conditions.dup
       builder.where!(conditions)
     end
 
-    def where!(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
+    def where!(conditions : Hash(Symbol, Value | Regex | Array(Value)) | NamedTuple) : self
       actual = @conditions ||= Conditions.new
       conditions.each do |k, v|
         if v.is_a?(Enumerable)

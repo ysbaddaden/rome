@@ -146,6 +146,14 @@ module Rome
       query.where(sql, *args)
     end
 
+    def where_not(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : Collection(self)
+      query.where_not(conditions)
+    end
+
+    def where_not(**conditions) : Collection(self)
+      query.where_not(**conditions)
+    end
+
     def limit(value : Int32) : Collection(self)
       query.limit(value)
     end

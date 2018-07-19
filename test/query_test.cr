@@ -220,6 +220,17 @@ module Rome
       assert_instance_of Array(User), users.to_a
     end
 
+    def test_where_regex
+      users = User.where(group_id: group_id)
+
+      assert_equal 2, users.where(name: /X-/).count
+      assert_equal 0, users.where(name: /x-/).count
+      refute_equal 2, users.where_not(name: /X-/).count
+
+      assert_equal 2, users.where(name: /x-/i).count
+      assert_equal 0, users.where_not(name: /x-/i).count
+    end
+
     def test_order
       users = User.order(:name, "group_id DESC")
       assert_instance_of Array(User), users.to_a

@@ -110,6 +110,14 @@ module Rome
               io << " IS NULL"
             end
 
+          when Regex
+            args << value.source
+            io << ' '
+            io << '!' if condition.not
+            io << '~'
+            io << '*' if value.options.ignore_case?
+            io << " $" << args.size
+
           else
             args << value
             if condition.not
