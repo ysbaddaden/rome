@@ -79,6 +79,13 @@ module Rome
       assert Group.all.all?(&.persisted?)
     end
 
+    def test_class_update
+      group = Group.create(name: "A")
+      Group.update(group.id, name: "B")
+      assert_equal "A", group.name
+      assert_equal "B", group.reload.name
+    end
+
     def test_update
       group = Group.create(name: "A")
 
@@ -90,6 +97,17 @@ module Rome
       group = Group.find(group.id)
       assert_equal "B", group.name
       assert_equal "a few words", group.description
+    end
+
+    def test_class_delete
+      ids = 5.times.map { |i| Group.create(name: i.to_s).id }.to_a
+      Group.delete(ids[0])
+      Group.delete(ids[2], ids[3])
+      refute Group.exists?(ids[0])
+      assert Group.exists?(ids[1])
+      refute Group.exists?(ids[2])
+      refute Group.exists?(ids[3])
+      assert Group.exists?(ids[4])
     end
 
     def test_delete

@@ -37,6 +37,35 @@ module Rome
       record
     end
 
+    # Updates one or many records identified by *id* in the database.
+    #
+    # ```
+    # User.update(1, { name: julien })
+    # User.update([1, 2, 3], { group_id: 2 })
+    # ```
+    def self.update(id, args) : Nil
+      where({ primary_key => id }).update_all(args)
+    end
+
+    # :ditto:
+    def self.update(id, **args) : Nil
+      update(id, args)
+    end
+
+    # Deletes one or many records identified by *ids* from the database.
+    #
+    # ```
+    # User.delete(1)
+    # User.delete(1, 2, 3)
+    # ```
+    def self.delete(*ids) : Nil
+      if ids.size == 1
+        where({ primary_key => ids.first }).delete_all
+      else
+        where({ primary_key => ids.to_a }).delete_all
+      end
+    end
+
     # Persists the record into the database. Either creates a new row or
     # updates an existing row.
     # ```
@@ -72,9 +101,7 @@ module Rome
           self.updated_at = Time.now
         end
 
-        self.class
-          .where({ self.class.primary_key => id })
-          .update_all(attributes_for_update.not_nil!)
+        self.class.update(id, attributes_for_update.not_nil!)
 
         changes_applied
       end
@@ -84,9 +111,7 @@ module Rome
 
     # Deletes the record from the database. Marks the record as deleted.
     def delete : Nil
-      self.class
-        .where({ self.class.primary_key => id })
-        .delete_all
+      self.class.delete(id)
       self.deleted = true
     end
 

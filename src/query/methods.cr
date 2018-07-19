@@ -307,7 +307,7 @@ module Rome
       # User.where(id: 1).update_all(group_id: 2)
       # # => UPDATE "users" SET "group_id" = 2 WHERE "id" = 1;
       # ```
-      def update_all(attributes : Hash) : Nil
+      def update_all(attributes : Hash | NamedTuple) : Nil
         Rome.adapter_class.new(@builder).update(attributes)
       end
 
