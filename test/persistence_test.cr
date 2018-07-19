@@ -2,12 +2,7 @@ require "./test_helper"
 
 module Rome
   class PersistenceTest < Minitest::Test
-    def teardown
-      Rome.connection do |db|
-        db.exec("TRUNCATE groups;")
-        db.exec("TRUNCATE users;")
-      end
-    end
+    include TransactionalTests
 
     def test_create
       assert_equal Group, typeof(Group.create(id: 0, name: "PLANET EXPRESS"))

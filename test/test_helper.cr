@@ -9,6 +9,22 @@ unless ENV["DATABASE_URL"]?
   Rome.database_url = "postgres://postgres@/rome_test"
 end
 
+module TransactionalTests
+  def before_setup
+    @transaction = Rome.begin_transaction
+    super
+  end
+
+  def after_teardown
+    super
+  ensure
+    if tx = @transaction
+      tx.rollback unless tx.closed?
+    end
+    Rome.release
+  end
+end
+
 Minitest.after_run do
   Rome.connection do |db|
     db.exec "DROP TABLE IF EXISTS groups;"

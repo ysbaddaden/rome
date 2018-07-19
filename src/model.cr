@@ -440,5 +440,13 @@ module Rome
     macro columns(**properties)
       ::Rome::Model.columns({{properties}}, strict: false)
     end
+
+    def ==(other : self) : Bool
+      other.id == id
+    end
+
+    def ==(other) : Bool
+      false
+    end
   end
 end

@@ -7,8 +7,10 @@ module Rome
   class RecordNotFound < Error; end
 
   @@adapter_class : Adapter.class | Nil
-  @@connection : DB::Database?
   @@database_url : String?
+  @@pool : DB::Database?
+  @@connections = {} of LibC::ULong => DB::Connection
+  @@transactions = {} of LibC::ULong => DB::Transaction
 
   def self.database_url
     @@database_url ||= ENV["DATABASE_URL"]
@@ -24,16 +26,76 @@ module Rome
     end
   end
 
-  def self.new_connection : DB::Database
-    DB.open(database_url)
+  def self.pool : DB::Database
+    @@pool ||= DB.open(database_url)
   end
 
-  def self.connection : DB::Database
-    @@connection ||= new_connection
+  def self.checkout : DB::Connection
+    @@connections[Fiber.current.object_id] ||= pool.checkout
+  end
+
+  def self.release : Nil
+    @@connections.delete(Fiber.current.object_id).try(&.release)
+    if tx = @@transactions.delete(Fiber.current.object_id)
+      tx.rollback unless tx.closed?
+    end
+  end
+
+  def self.with_connection
+    if db = @@connections[Fiber.current.object_id]?
+      yield db
+    else
+      begin
+        yield checkout
+      ensure
+        release
+      end
+    end
   end
 
   def self.connection
-    connection.using_connection { |db| yield db }
+    if db = @@connections[Fiber.current.object_id]?
+      yield db
+    else
+      pool.using_connection { |db| yield db }
+    end
+  end
+
+  def self.begin_transaction : DB::Transaction
+    @@transactions[Fiber.current.object_id] ||= checkout.begin_transaction
+  end
+
+  def self.transaction
+    if tx = @@transactions[Fiber.current.object_id]?
+      transaction(tx.begin_transaction) { |tx| yield tx }
+    else
+      Rome.with_connection do |conn|
+        transaction(conn.begin_transaction) { |tx| yield tx }
+      end
+    end
+  end
+
+  private def self.transaction(tx : DB::Transaction)
+    id = Fiber.current.object_id
+    @@transactions[id] = tx
+
+    begin
+      yield tx
+    rescue ex
+      tx.rollback unless tx.closed?
+      raise ex unless ex.is_a?(DB::Rollback)
+    else
+      tx.commit unless tx.closed?
+    ensure
+      case tx
+      when DB::TopLevelTransaction
+        @@transactions.delete(id)
+      when DB::SavePointTransaction
+        @@transactions[id] = tx.@parent
+      else
+        raise "unsupported transaction type: #{tx.class.name}"
+      end
+    end
   end
 end
 

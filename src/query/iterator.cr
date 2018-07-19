@@ -41,7 +41,7 @@ module Rome
 
       private def query
         sql, args = Rome.adapter_class.new(@builder).select_sql
-        Rome.connection.query(sql, args)
+        Rome.connection(&.query(sql, args))
       end
     end
   end
