@@ -13,4 +13,4 @@ before_script:
   - mysql -e "CREATE DATABASE rome_test;"
 
 script:
-  - crystal run `find test -iname "*_test.cr"`
+  - crystal run --no-debug `find test -iname "*_test.cr"`
