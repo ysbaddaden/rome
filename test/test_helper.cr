@@ -36,7 +36,9 @@ Rome.connection do |db|
   db.exec "DROP TABLE IF EXISTS groups;"
   db.exec "DROP TABLE IF EXISTS users;"
 
-  case URI.parse(Rome.database_url).scheme
+  uri = URI.parse(Rome.database_url)
+
+  case uri.scheme
   when "postgres"
     db.exec <<-SQL
     CREATE TABLE groups (
@@ -70,10 +72,14 @@ Rome.connection do |db|
       uuid CHAR(36) NOT NULL PRIMARY KEY,
       group_id INT NOT NULL,
       name VARCHAR(50) NOT NULL,
-      created_at TIMESTAMP NOT NULL,
-      updated_at TIMESTAMP NOT NULL
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
     );
     SQL
+
+  else
+    puts "Unknown database scheme: #{uri.scheme}"
+    exit 1
   end
 end
 
