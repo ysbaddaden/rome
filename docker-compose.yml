@@ -1,0 +1,41 @@
+version: "3.0"
+
+services:
+  setup:
+    build: .
+    command: "shards install"
+    user: "1000:1000"
+    volumes:
+      - .:/usr/src
+
+  test_mysql:
+    build: .
+    command: "sh -c 'crystal run --no-debug test/*_test.cr test/**/*_test.cr'"
+    environment:
+      DATABASE_URL: "mysql://root:secret@mysql/rome_test"
+    volumes:
+      - .:/usr/src
+    depends_on:
+      - mysql
+
+  test_postgresql:
+    build: .
+    command: "sh -c 'crystal run --no-debug test/*_test.cr test/**/*_test.cr'"
+    environment:
+      DATABASE_URL: "postgres://postgres:secret@postgresql/rome_test"
+    volumes:
+      - .:/usr/src
+    depends_on:
+      - postgresql
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: rome_test
+
+  postgresql:
+    image: postgres:11-alpine
+    environment:
+      POSTGRES_DB: rome_test
+      POSTGRES_PASSWORD: secret
