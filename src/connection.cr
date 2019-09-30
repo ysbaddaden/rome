@@ -103,21 +103,30 @@ end
   require "colorize"
 
   module DB::QueryMethods
-    def query(sql, *args)
-      __rome_log(sql, args) { build(sql).query(*args) }
+    def query(sql, *args_, args : Array? = nil)
+      __rome_log(sql, args_, args) do
+        build(sql).query(*args_, args: args)
+      end.not_nil!
     end
 
-    def exec(sql, *args)
-      __rome_log(sql, args) { build(sql).exec(*args) }
+    def exec(sql, *args_, args : Array? = nil)
+      __rome_log(sql, args_, args) do
+        build(sql).exec(*args_, args: args)
+      end.not_nil!
     end
 
-    def scalar(sql, *args)
-      __rome_log(sql, args) { build(sql).scalar(*args) }
+    def scalar(sql, *args_, args : Array? = nil)
+      __rome_log(sql, args_, args) do
+        build(sql).scalar(*args_, args: args)
+      end
     end
 
-    private def __rome_log(sql, args)
+    private def __rome_log(sql, args_, args)
       rs = nil
       error = nil
+
+      logging_args = EnumerableConcat.build(args_, args)
+      logging_args.to_a if logging_args.is_a?(EnumerableConcat)
 
       spent = Time.measure do
         begin
@@ -136,7 +145,7 @@ end
         str << sql.gsub(/\s+/, ' ')
         str << ' '
         str << '['
-        args.each_with_index do |arg, index|
+        logging_args.each_with_index do |arg, index|
           str << ", " unless index == 0
           arg.inspect(str)
         end
@@ -146,7 +155,7 @@ end
       STDERR.puts(log)
 
       raise error if error
-      rs.not_nil!
+      rs
     end
   end
 {% end %}

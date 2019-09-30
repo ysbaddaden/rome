@@ -12,40 +12,47 @@ module Rome
     end
 
     def insert(attributes : Hash) : Nil
-      rs = Rome.connection &.exec(*insert_sql(attributes))
+      sql, args = insert_sql(attributes)
+      rs = Rome.connection &.exec(sql, args: args)
       yield rs.last_insert_id
     end
 
     def select_one
       return if @builder.none?
-      Rome.connection &.query_one?(*select_sql) { |rs| yield rs }
+      sql, args = select_sql
+      Rome.connection &.query_one?(sql, args: args) { |rs| yield rs }
     end
 
     def select_all(&block : DB::ResultSet -> U) : Array(U) forall U
       if @builder.none?
         Array(U).new(0)
       else
-        Rome.connection &.query_all(*select_sql) { |rs| yield rs }
+        sql, args = select_sql
+        Rome.connection &.query_all(sql, args: args) { |rs| yield rs }
       end
     end
 
     def select_each : Nil
       return if @builder.none?
-      Rome.connection &.query_each(*select_sql) { |rs| yield rs }
+      sql, args = select_sql
+      Rome.connection &.query_each(sql, args: args) { |rs| yield rs }
     end
 
     def scalar
-      Rome.connection &.scalar(*select_sql)
+      sql, args = select_sql
+      Rome.connection &.scalar(sql, args: args)
     end
 
     def update(attributes : Hash | NamedTuple) : Nil
       return if @builder.none?
-      Rome.connection &.exec(*update_sql(attributes))
+      sql, args = update_sql(attributes)
+      Rome.connection &.exec(sql, args: args)
     end
 
     def delete : Nil
       return if @builder.none?
-      Rome.connection &.exec(*delete_sql)
+      sql, args = delete_sql
+      Rome.connection &.exec(sql, args: args)
     end
 
     def to_sql : String
