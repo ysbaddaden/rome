@@ -9,7 +9,8 @@ module Rome
     end
 
     def insert(attributes : Hash | NamedTuple)
-      Rome.connection &.query_one(*insert_sql(attributes)) do |rs|
+      sql, args = insert_sql(attributes)
+      Rome.connection &.query_one(sql, args: args) do |rs|
         yield rs.read
       end
     end
