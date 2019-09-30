@@ -54,7 +54,7 @@ module Rome
           raise ::JSON::MappingError.new(%ex.message, self.class.to_s, nil, *%location, %ex)
         end
 
-        until pull.kind == :end_object
+        until pull.kind.end_object?
           %location = pull.location
           %name = pull.read_object_key
 
@@ -96,7 +96,7 @@ module Rome
           raise ::JSON::MappingError.new(ex.message, self.class.to_s, nil, *location, ex)
         end
 
-        until pull.kind == :end_object
+        until pull.kind.end_object?
           location = pull.location
           name = pull.read_object_key
 

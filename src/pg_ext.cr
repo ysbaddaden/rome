@@ -12,6 +12,6 @@ end
 
 struct PQ::Param
   def self.encode(val : UUID)
-    encode val.to_slice.clone
+    encode val.bytes
   end
 end

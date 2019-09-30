@@ -5,7 +5,7 @@ module Rome
     module Methods(T)
       @builder : Builder
 
-      abstract def dup(builder : Builder) : self
+      abstract def dup(builder : Builder) # : self
 
       # Ensures that the query will never return anything from the database.
       def none : self

@@ -16,10 +16,10 @@ module Rome
       raise ReadOnlyRecord.new if record.deleted?
 
       if record.responds_to?(:created_at=)
-        record.created_at ||= Time.now
+        record.created_at ||= Time.utc
       end
       if record.responds_to?(:updated_at=)
-        record.updated_at ||= Time.now
+        record.updated_at ||= Time.utc
       end
 
       attributes = record.attributes_for_create
@@ -98,7 +98,7 @@ module Rome
 
       if changed?
         if self.responds_to?(:updated_at=)
-          self.updated_at = Time.now
+          self.updated_at = Time.utc
         end
 
         self.class.update(id, attributes_for_update.not_nil!)
