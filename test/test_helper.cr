@@ -2,7 +2,6 @@ require "minitest/autorun"
 
 require "../src/pg_ext"
 require "../src/mysql_ext"
-
 require "../src/rome"
 
 unless ENV["DATABASE_URL"]?
