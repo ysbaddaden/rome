@@ -53,17 +53,10 @@ module Rome
     end
 
     def test_save_associations
-      typeof(Author.new(name: "").save_belongs_associations)
-      typeof(Author.new(name: "").save_has_associations)
-
-      typeof(Book.new(name: "").save_belongs_associations)
-      typeof(Book.new(name: "").save_has_associations)
-
-      typeof(Supplier.new.save_belongs_associations)
-      typeof(Supplier.new.save_has_associations)
-
-      typeof(Account.new.save_belongs_associations)
-      typeof(Account.new.save_has_associations)
+      typeof(Author.new(name: "").save_associations {})
+      typeof(Book.new(name: "").save_associations {})
+      typeof(Supplier.new.save_associations {})
+      typeof(Account.new.save_associations {})
     end
   end
 end
