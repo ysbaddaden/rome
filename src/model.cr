@@ -1,9 +1,11 @@
 require "./query"
+require "./associations"
 require "./serialization"
 
 module Rome
   abstract class Model
     extend Query
+    include Associations
     include Serialization
 
     macro inherited
@@ -51,6 +53,9 @@ module Rome
     # `Rome::MissingAttribute` exception when the attribute is undefined (e.g.
     # not loaded from the database).
     abstract def [](attr_name : Symbol) : Value
+
+    # Generic setter for an attribute. Only valid for known columns.
+    abstract def []=(attr_name : Symbol, value) : Value
 
     # Generic accessor for an attribute. Returns `nil` when the attribute is
     # undefined (e.g. not loaded from the database).
@@ -307,6 +312,20 @@ module Rome
            @{{key}} {% unless opts[:null] %}||
              raise ::Rome::MissingAttribute.new("required attribute #{self.class.name}[:{{key}}] is missing")
            {% end %}
+         {% end %}
+         else
+           raise ::Rome::MissingAttribute.new("no such attribute: #{self.class.name}[:#{attr_name}]")
+         end
+      end
+
+      # :nodoc:
+      def []=(attr_name : Symbol, value : ::Rome::Value) : ::Rome::Value
+         val = value.as(::Rome::Value)
+
+         case attr_name
+         {% for key, opts in properties %}
+         when {{key.symbolize}}
+           @{{key}} = val.as({{opts[:ivar_type]}})
          {% end %}
          else
            raise ::Rome::MissingAttribute.new("no such attribute: #{self.class.name}[:#{attr_name}]")
