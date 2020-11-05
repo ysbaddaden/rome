@@ -1,0 +1,56 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [master]
+
+  pull_request:
+    branches: [master]
+
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  test_mysql:
+    runs-on: ubuntu-20.04
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_DATABASE: "rome_test"
+          MYSQL_ROOT_PASSWORD: "secret"
+        ports:
+          - 3306:3306
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: oprypin/install-crystal@v1
+      - run: timeout 60 sh -c 'until nc -z localhost 3306; do sleep 1; done'
+      - run: shards install
+      - run: crystal run --no-debug $(find test -iname '*_test.cr')
+        env:
+          DATABASE_URL: "mysql://root:secret@localhost/rome_test"
+
+  test_postgresql:
+    runs-on: ubuntu-20.04
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    services:
+      mysql:
+        image: postgres:11-alpine
+        env:
+          POSTGRES_DB: "rome_test"
+          POSTGRES_PASSWORD: "secret"
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: oprypin/install-crystal@v1
+      - run: timeout 60 sh -c 'until nc -z localhost 5432; do sleep 1; done'
+      - run: shards install
+      - run: crystal run --no-debug $(find test -iname '*_test.cr')
+        env:
+          DATABASE_URL: "postgres://postgres:secret@localhost/rome_test"
