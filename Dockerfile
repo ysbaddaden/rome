@@ -1,4 +1,4 @@
-FROM crystallang/crystal:0.35.1-alpine
+FROM crystallang/crystal:1.1.1-alpine
 
 # RUN apk add --no-cache crystal libc-dev make openssl-dev shards zlib-dev
 
