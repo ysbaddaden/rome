@@ -51,7 +51,7 @@ module Rome
         begin
           pull.read_begin_object
         rescue %ex : ::JSON::ParseException
-          raise ::JSON::MappingError.new(%ex.message, self.class.to_s, nil, *%location, %ex)
+          raise ::JSON::SerializableError.new(%ex.message, self.class.to_s, nil, *%location, %ex)
         end
 
         until pull.kind.end_object?
@@ -72,7 +72,7 @@ module Rome
 
               {% if opts[:null] %} end {% end %}
             rescue %ex : ::JSON::ParseException
-              raise ::JSON::MappingError.new(%ex.message, self.class.to_s, %name, *%location, %ex)
+              raise ::JSON::SerializableError.new(%ex.message, self.class.to_s, %name, *%location, %ex)
             end
           {% end %}
           else
@@ -93,7 +93,7 @@ module Rome
         begin
           pull.read_begin_object
         rescue ex : ::JSON::ParseException
-          raise ::JSON::MappingError.new(ex.message, self.class.to_s, nil, *location, ex)
+          raise ::JSON::SerializableError.new(ex.message, self.class.to_s, nil, *location, ex)
         end
 
         until pull.kind.end_object?
@@ -114,7 +114,7 @@ module Rome
 
               {% if opts[:null] %} end {% end %}
             rescue ex : ::JSON::ParseException
-              raise ::JSON::MappingError.new(ex.message, self.class.to_s, name, *location, ex)
+              raise ::JSON::SerializableError.new(ex.message, self.class.to_s, name, *location, ex)
             end
           {% end %}
           else
