@@ -105,7 +105,7 @@ Rome.connection do |db|
 
     db.exec <<-SQL
     CREATE TABLE users (
-      uuid CHAR(36) NOT NULL PRIMARY KEY,
+      uuid BINARY(16) NOT NULL PRIMARY KEY,
       group_id INT NOT NULL,
       name VARCHAR(50) NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),

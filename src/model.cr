@@ -55,7 +55,7 @@ module Rome
     abstract def [](attr_name : Symbol) : Value
 
     # Generic setter for an attribute. Only valid for known columns.
-    abstract def []=(attr_name : Symbol, value) : Value
+    abstract def []=(attr_name : Symbol, value : Value) : Value
 
     # Generic accessor for an attribute. Returns `nil` when the attribute is
     # undefined (e.g. not loaded from the database).
@@ -260,7 +260,7 @@ module Rome
         # `Rome::MissingAttribute` exception when undefined.{% end %}
         def {{key}} : {{opts[:type]}}
           @{{key}} {% unless opts[:null] %}||
-            raise ::Rome::MissingAttribute.new("required attribute #{self.class.name}\#{{key}} is missing")
+            raise ::Rome::MissingAttribute.new("required attribute #{self.class.name}#" + "{{key}} is missing")
           {% end %}
         end
 

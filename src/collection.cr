@@ -44,7 +44,7 @@ module Rome
   # count = User.count("LENGTH(name)", distinct: true)
   # # => SELECT COUNT(DISTINCT LENGTH(name)) FROM "users";
   # ```
-  struct Collection(T)
+  class Collection(T)
     include Enumerable(T)
     include Query::Methods(T)
     include Query::Cache(T)

@@ -6,7 +6,7 @@ module Rome
       @cache : Array(T)?
 
       def to_a : Array(T)
-        @cache ||= Rome.adapter_class.new(@builder).select_all { |rs| T.new(rs) }
+        @cache ||= Rome.adapter_class.new(builder).select_all { |rs| T.new(rs) }
       end
 
       # Iterates all records loaded from the database.
@@ -20,7 +20,7 @@ module Rome
         if cache = @cache
           cache.each
         else
-          Iterator(T).new(@builder)
+          Iterator(T).new(builder)
         end
       end
 

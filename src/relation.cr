@@ -2,30 +2,20 @@ require "./query/methods"
 require "./query/cache"
 
 module Rome
-  struct Relation(T)
+  class Relation(T)
     include Enumerable(T)
     include Query::Methods(T)
     include Query::Cache(T)
 
     # :nodoc:
-    def self.new(record : Model, foreign_key : Symbol)
-      if record.id?
-        builder = ::Rome::Query::Builder.new(T.table_name, T.primary_key.to_s)
-        builder.where!({ foreign_key => record.id })
-        new(record, foreign_key, builder)
-      else
-        raise RecordNotSaved.new("can't initialize Relation(#{T.name}) for #{record.class.name} doesn't have an id.")
-      end
-    end
-
-    # :nodoc:
-    protected def initialize(@record : Model, @foreign_key : Symbol, @builder : Query::Builder)
+    def initialize(@parent : Model, @foreign_key : Symbol, @builder : Query::Builder? = nil)
     end
 
     def build(**attributes) : T
       record = T.new(**attributes)
-      record[@foreign_key] = @record.id
-      # TODO: should be added to the cache?
+      #record[@source] = @parent
+      record[@foreign_key] = @parent.id?
+      (@cache ||= [] of T) << record
       record
     end
 
@@ -42,7 +32,18 @@ module Rome
     end
 
     protected def dup(builder : Query::Builder) : self
-      Relation(T).new(@record, @foreign_key, builder)
+      Relation(T).new(@parent, @foreign_key, builder)
+    end
+
+    protected def builder
+      @builder ||=
+        if @parent.id?
+          builder = ::Rome::Query::Builder.new(T.table_name, T.primary_key.to_s)
+          builder.where!({ @foreign_key => @parent.id })
+          builder
+        else
+          raise RecordNotSaved.new("can't initialize Relation(#{T.name}) for #{@parent.class.name} doesn't have an id.")
+        end
     end
   end
 end

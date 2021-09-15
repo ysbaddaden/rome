@@ -34,8 +34,20 @@ module Rome
       end
 
       def {{name.id}}=(record : {{class_name}}) : {{class_name}}
-        self.{{foreign_key.id}} = record.id if record.id?
+        self.{{foreign_key.id}} = record.id unless record.new_record?
         @{{name.id}} = record
+      end
+
+      def build_{{name.id}}(**attributes) : {{class_name}}
+        self.{{name.id}} = {{class_name}}.new(**attributes)
+      end
+
+      def create_{{name.id}}(**attributes) : {{class_name}}
+        self.{{name.id}} = {{class_name}}.create(**attributes)
+      end
+
+      def create_{{name.id}}!(**attributes) : {{class_name}}
+        self.{{name.id}} = {{class_name}}.create!(**attributes)
       end
 
       def reload_{{name.id}} : {{class_name}}
@@ -74,7 +86,7 @@ module Rome
 
       def {{name.id}}=(record : {{class_name}}) : {{class_name}}
         unless new_record?
-          if previous_id = @{{foreign_key.id}}
+          if previous_id = record.{{foreign_key.id}}
             %query = {{class_name}}.where({{foreign_key.id}}: previous_id)
             case {{dependent}}
             when :delete
@@ -87,6 +99,22 @@ module Rome
           record.save
         end
         @{{name.id}} = record
+      end
+
+      def build_{{name.id}}(**attributes) : {{class_name}}
+        record = {{class_name}}.new(**attributes)
+        record.{{foreign_key.id}} = id unless new_record?
+        @{{name.id}} = record
+      end
+
+      def create_{{name.id}}(**attributes) : {{class_name}}
+        raise RecordNotSaved.new("can't initialize {{class_name}} for #{self.class.name} doesn't have an id.") unless id?
+        build(**attributes).tap(&.save)
+      end
+
+      def create_{{name.id}}!(**attributes) : {{class_name}}
+        raise RecordNotSaved.new("can't initialize {{class_name}} for #{self.class.name} doesn't have an id.") unless id?
+        build(**attributes).tap(&.save!)
       end
 
       def reload_{{name.id}} : {{class_name}}
