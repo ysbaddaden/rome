@@ -18,40 +18,55 @@ module Rome
     private def build_insert(attributes : Hash, io, args)
       io << "INSERT INTO "
       quote(builder.table_name, io)
-      io << " ("
 
-      attributes.each_with_index do |(column_name, _), index|
-        io << ", " unless index == 0
-        quote(column_name, io)
+      if attributes.empty?
+        io << " DEFAULT VALUES"
+      else
+        io << " ("
+
+        attributes.each_with_index do |(column_name, _), index|
+          io << ", " unless index == 0
+          quote(column_name, io)
+        end
+
+        io << ") VALUES ("
+        attributes.each_with_index do |(_, value), index|
+          args << value
+          io << ", " unless index == 0
+          io << '$' << args.size
+        end
+
+        io << ')'
       end
 
-      io << ") VALUES ("
-      attributes.each_with_index do |(_, value), index|
-        args << value
-        io << ", " unless index == 0
-        io << '$' << args.size
-      end
-      io << ") RETURNING "
+      io << " RETURNING "
       quote(builder.primary_key, io)
     end
 
     private def build_insert(attributes : NamedTuple, io, args)
       io << "INSERT INTO "
       quote(builder.table_name, io)
-      io << " ("
 
-      attributes.each_with_index do |column_name, _, index|
-        io << ", " unless index == 0
-        quote(column_name, io)
+      if attributes.empty?
+        io << "DEFAULT VALUES"
+      else
+        io << " ("
+
+        attributes.each_with_index do |column_name, _, index|
+          io << ", " unless index == 0
+          quote(column_name, io)
+        end
+
+        io << ") VALUES ("
+        attributes.each_with_index do |_, value, index|
+          args << value
+          io << ", " unless index == 0
+          io << '$' << args.size
+        end
+        io << ')'
       end
 
-      io << ") VALUES ("
-      attributes.each_with_index do |_, value, index|
-        args << value
-        io << ", " unless index == 0
-        io << '$' << args.size
-      end
-      io << ") RETURNING "
+      io << " RETURNING "
       quote(builder.primary_key, io)
     end
 

@@ -8,6 +8,10 @@ module Rome
       io << '`'
     end
 
+    def build_insert_default_values(io)
+      io << " () VALUES ()"
+    end
+
     protected def build_where_regex(condition, io, args)
       re = condition.value.as(Regex)
       args << re.source

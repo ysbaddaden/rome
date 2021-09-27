@@ -142,6 +142,10 @@ module Rome
         %(INSERT INTO `users` (`name`, `about`) VALUES (?, ?)),
         ["julien", ""]
       }, adapter.insert_sql({ :name => "julien", :about => "" }))
+
+      assert_sql({
+        %(INSERT INTO `suppliers` () VALUES ()), [] of String
+      }, adapter(Query::Builder.new("suppliers", "id")).insert_sql({} of String => String))
     end
 
     def test_update
