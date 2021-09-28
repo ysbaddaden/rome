@@ -22,14 +22,14 @@ module Rome
         record.updated_at ||= Time.utc
       end
 
-      attributes = record.attributes_for_create
-      attributes.delete(primary_key) unless record.id?
-
       builder = Query::Builder.new(table_name, primary_key.to_s)
       adapter = Rome.adapter_class.new(builder)
 
       Rome.transaction do
         record.save_associations do
+          attributes = record.attributes_for_create
+          attributes.delete(primary_key) unless record.id?
+
           adapter.insert(attributes) do |id|
             record.set_primary_key_after_create(id) unless record.id?
             record.new_record = false

@@ -9,15 +9,40 @@ module Rome
     # Declares a belongs to relationship.
     #
     # This will add the following methods:
-    # - `association` returns the associated object (or nil).
+    # - `association` returns the associated object (or nil);
     # - `association=` assigns the associated object, assigning the foreign key;
+    # - `build_association` builds the associated object, assigning the foreign
+    #   key if the parent record is persisted, or delaying it to when the new
+    #   record is saved;
+    # - `create_association` creates the associated object, assigning the foreign
+    #   key, granted that validation passed on the associated object;
+    # - `create_association!` same as `create_association` but raises a
+    #   Rome::RecordNotSaved exception when validation fails;
     # - `reload_association` to reload the associated object.
     #
     # For example a Book class declares `belongs_to :author` which will add:
     #
     # - `Book#author` (similar to `Author.find(author_id)`)
     # - `Book#author=(author)` (similar to `book.author_id = author.id`)
-    # - `Book#reload_author`
+    # - `Book#build_author` (similar to book.author = Author.new)
+    # - `Book#create_author` (similar to book.author = Author.create)
+    # - `Book#create_author!` (similar to book.author = Author.create!)
+    # - `Book#reload_author` (force reload book.author)
+    #
+    # Options
+    #
+    # - `class_name` overrides the association class name (inferred as
+    #   `name.camelcase` by default);
+    # - `foreign_key` overrides the foreign key on the association (inferred as
+    #   `name + "_id"` by default);
+    # - `autosave` can be either:
+    #   - `nil` (default) to only save newly built associations when the parent
+    #     record is saved,
+    #   - `true` to always save the associations (new or already persisted),
+    #   - `false` to never save the associations automatically.
+    # - `dependent` can be either:
+    #   - `:delete` to `delete` the associated record in SQL,
+    #   - `:destroy` to call `#destroy` on the associated object.
     macro belongs_to(name, class_name = nil, foreign_key = nil, autosave = nil, dependent = nil)
       {% unless class_name
            class_name = name.id.stringify.camelcase.id
@@ -68,7 +93,26 @@ module Rome
     #
     # - `Account#supplier` (similar to `Supplier.find_by(account_id: account.id)`)
     # - `Account#supplier=(supplier)` (similar to `supplier.account_id = account.id`)
+    # - `Account#build_supplier`
+    # - `Account#create_supplier`
+    # - `Account#create_supplier!`
     # - `Account#reload_supplier`
+    #
+    # Options
+    #
+    # - `class_name` overrides the association class name (inferred as
+    #   `name.camelcase` by default);
+    # - `foreign_key` overrides the foreign key for the association (inferred as
+    #   the name of this class + "_id" by default);
+    # - `autosave` can be either:
+    #   - `nil` (default) to only save newly built associations when the parent
+    #     record is saved,
+    #   - `true` to always save the associations (new or already persisted),
+    #   - `false` to never save the associations automatically.
+    # - `dependent` can be either:
+    #   - `:nullify` (default) to set the foreign key to `nil` in SQL,
+    #   - `:delete` to `delete` the associated record in SQL,
+    #   - `:destroy` to call `#destroy` on the associated object.
     macro has_one(name, class_name = nil, foreign_key = nil, autosave = nil, dependent = nil)
       {% unless class_name
            class_name = name.id.stringify.camelcase.id
@@ -86,15 +130,20 @@ module Rome
 
       def {{name.id}}=(record : {{class_name}}) : {{class_name}}
         unless new_record?
-          if previous_id = record.{{foreign_key.id}}
-            %query = {{class_name}}.where({{foreign_key.id}}: previous_id)
-            case {{dependent}}
-            when :delete
-              %query.delete_all
-            else # :nullify
-              %query.update_all({{foreign_key.id}}: nil)
+
+          case {{dependent}}
+          when :delete
+            {{class_name}}.where({{foreign_key.id}}: id).delete_all
+          when :destroy
+            if %assoc = @{{name.id}}
+              %assoc.destroy
+            else
+              {{class_name}}.where({{foreign_key.id}}: id).take?.try(&.destroy)
             end
+          else # :nullify
+            {{class_name}}.where({{foreign_key.id}}: id).update_all({{foreign_key.id}}: nil)
           end
+
           record.{{foreign_key.id}} = id
           record.save
         end
@@ -108,13 +157,13 @@ module Rome
       end
 
       def create_{{name.id}}(**attributes) : {{class_name}}
-        raise RecordNotSaved.new("can't initialize {{class_name}} for #{self.class.name} doesn't have an id.") unless id?
-        build(**attributes).tap(&.save)
+        raise Rome::RecordNotSaved.new("can't initialize {{class_name}} for #{self.class.name} doesn't have an id.") unless id?
+        build_{{name.id}}(**attributes).tap(&.save)
       end
 
       def create_{{name.id}}!(**attributes) : {{class_name}}
-        raise RecordNotSaved.new("can't initialize {{class_name}} for #{self.class.name} doesn't have an id.") unless id?
-        build(**attributes).tap(&.save!)
+        raise Rome::RecordNotSaved.new("can't initialize {{class_name}} for #{self.class.name} doesn't have an id.") unless id?
+        build_{{name.id}}(**attributes).tap(&.save!)
       end
 
       def reload_{{name.id}} : {{class_name}}
@@ -180,18 +229,14 @@ module Rome
     protected def delete_associations
       {% for ivar in @type.instance_vars %}
         {% if ann = ivar.annotation(::Rome::Associations::BelongsTo) %}
-          {% if ann[:dependent] %}}
-            if {{foreign_key.id}}?
+          {% if ann[:dependent] %}
+            if {{ann[:foreign_key].id}}?
               {% if ann[:dependent] == :destroy %}
                 self.{{ivar.id}}.try(&.destroy)
               {% elsif ann[:dependent] == :delete %}
                 {{ann[:class_name]}}
-                  .where({ {{ann[:class_name]}}.primary_key => {{foreign_key.id}} })
+                  .where({ {{ann[:class_name]}}.primary_key => {{ann[:foreign_key].id}} })
                   .delete_all
-              {% elsif ann[:dependent] == :nullify %}
-                {{ann[:class_name]}}
-                  .where({ {{ann[:class_name]}}.primary_key => {{foreign_key.id}} })
-                  .update_all({{ann[:foreign_key]}}: id)
               {% end %}
             end
           {% end %}
@@ -206,7 +251,7 @@ module Rome
           {% elsif ann[:dependent] == :nullify %}
             {{ann[:class_name]}}
               .where({{ann[:foreign_key]}}: id)
-              .update_all({{ann[:foreign_key]}}: id)
+              .update_all({{ann[:foreign_key]}}: nil)
           {% end %}
 
         {% elsif ann = ivar.annotation(::Rome::Associations::HasMany) %}
@@ -219,7 +264,7 @@ module Rome
           {% elsif ann[:dependent] == :nullify %}
             {{ann[:class_name]}}
               .where({{ann[:foreign_key]}}: id)
-              .update_all({{ann[:foreign_key]}}: id)
+              .update_all({{ann[:foreign_key]}}: nil)
           {% end %}
         {% end %}
       {% end %}

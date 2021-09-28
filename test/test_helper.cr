@@ -90,7 +90,7 @@ Rome.connection do |db|
     db.exec <<-SQL
     CREATE TABLE accounts (
       id SERIAL NOT NULL PRIMARY KEY,
-      supplier_id INT NOT NULL
+      supplier_id INT
     );
     SQL
 
@@ -137,7 +137,7 @@ Rome.connection do |db|
     db.exec <<-SQL
     CREATE TABLE accounts (
       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      supplier_id INT NOT NULL
+      supplier_id INT
     );
     SQL
 
@@ -237,7 +237,7 @@ end
 class Account < Rome::Model
   columns(
     id: {type: Int32, primary_key: true},
-    supplier_id: {type: Int32},
+    supplier_id: {type: Int32?},
   )
   belongs_to :supplier
 end
@@ -248,4 +248,90 @@ end
   1.upto(2) do |index|
     User.create(uuid: UUID.random, group_id: group.id, name: "User ##{group_id}-#{index}")
   end
+end
+
+class AuthorAutosave < Rome::Model
+  self.table_name = "authors"
+  columns(
+    id:   {type: Int32, primary_key: true},
+    name: {type: String},
+  )
+  has_many :books, autosave: true, foreign_key: "author_id"
+end
+
+class AuthorNoAutosave < Rome::Model
+  self.table_name = "authors"
+  columns(
+    id:   {type: Int32, primary_key: true},
+    name: {type: String},
+  )
+  has_many :books, autosave: false, foreign_key: "author_id"
+end
+
+class BookAutosave < Rome::Model
+  self.table_name = "books"
+  columns(
+    id:        {type: Int32, primary_key: true},
+    author_id: {type: Int32},
+    name:      {type: String},
+  )
+  belongs_to :author, autosave: true
+end
+
+class BookNoAutosave < Rome::Model
+  self.table_name = "books"
+  columns(
+    id:        {type: Int32, primary_key: true},
+    author_id: {type: Int32},
+    name:      {type: String},
+  )
+  belongs_to :author, autosave: false
+end
+
+class SupplierAutosave < Rome::Model
+  self.table_name = "suppliers"
+  columns(id: {type: Int32, primary_key: true})
+  has_one :account, autosave: true, foreign_key: "supplier_id"
+end
+
+class SupplierNoAutosave < Rome::Model
+  self.table_name = "suppliers"
+  columns(id: {type: Int32, primary_key: true})
+  has_one :account, autosave: false, foreign_key: "supplier_id"
+end
+
+class SupplierDependentNullify < Rome::Model
+  self.table_name = "suppliers"
+  columns(id: {type: Int32, primary_key: true})
+  has_one :account, dependent: :nullify, foreign_key: "supplier_id"
+end
+
+class SupplierDependentDelete < Rome::Model
+  self.table_name = "suppliers"
+  columns(id: {type: Int32, primary_key: true})
+  has_one :account, dependent: :delete, foreign_key: "supplier_id"
+end
+
+class SupplierDependentDestroy < Rome::Model
+  self.table_name = "suppliers"
+  columns(id: {type: Int32, primary_key: true})
+  has_one :account, dependent: :destroy, foreign_key: "supplier_id"
+end
+
+class AccountDependentDelete < Rome::Model
+  self.table_name = "accounts"
+  columns(
+    id: {type: Int32, primary_key: true},
+    supplier_id: {type: Int32?},
+  )
+  belongs_to :supplier, dependent: :delete
+end
+
+class AccountDependentDestroy < Rome::Model
+  self.table_name = "accounts"
+  columns(
+    id: {type: Int32, primary_key: true},
+    supplier_id: {type: Int32?},
+  )
+  belongs_to :supplier, dependent: :destroy
 end
