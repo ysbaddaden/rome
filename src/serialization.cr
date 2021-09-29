@@ -131,8 +131,11 @@ module Rome
           {% end %}
 
           if extra_attributes = @extra_attributes
-            extra_attributes.each do |key, opts|
-              json.field(key, opts)
+            extra_attributes.each do |key, value|
+              if value.is_a?(Bytes)
+                raise ::JSON::SerializableError.new("can't serialize binary value", self.class.to_s, key, 0, 0, nil)
+              end
+              json.field(key, value)
             end
           end
         end

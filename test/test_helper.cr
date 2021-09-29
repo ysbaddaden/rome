@@ -2,6 +2,7 @@ require "minitest/autorun"
 
 require "../src/pg_ext"
 require "../src/mysql_ext"
+require "../src/sqlite3_ext"
 require "../src/rome"
 
 unless ENV["DATABASE_URL"]?
@@ -76,6 +77,24 @@ Rome.connection do |db|
     );
     SQL
 
+  when "sqlite3"
+    db.exec <<-SQL
+    CREATE TABLE groups (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name VARCHAR(50) NOT NULL,
+      description TEXT
+    );
+    SQL
+
+    db.exec <<-SQL
+    CREATE TABLE users (
+      uuid BLOB NOT NULL PRIMARY KEY,
+      group_id INT NOT NULL,
+      name VARCHAR(50) NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    SQL
   else
     puts "Unknown database scheme: #{uri.scheme}"
     exit 1
