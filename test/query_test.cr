@@ -227,8 +227,11 @@ module Rome
       assert_equal 0, users.where(name: /x-/).count
       refute_equal 2, users.where_not(name: /X-/).count
 
-      assert_equal 2, users.where(name: /x-/i).count
-      assert_equal 0, users.where_not(name: /x-/i).count
+      # can't pass the ignore case to SQLite3::REGEXP_FN
+      unless Rome.adapter_class == Rome::Adapter::SQLite3
+        assert_equal 2, users.where(name: /x-/i).count
+        assert_equal 0, users.where_not(name: /x-/i).count
+      end
     end
 
     def test_order
@@ -237,7 +240,13 @@ module Rome
     end
 
     def test_pluck
-      User.pluck(:uuid).each { |uuid| assert_instance_of UUID|String, uuid }
+      User.pluck(:uuid).each do |uuid|
+        if Rome.adapter_class == Rome::Adapter::SQLite3
+          assert_instance_of Bytes, uuid
+        else
+          assert_instance_of UUID|String, uuid
+        end
+      end
       User.pluck("LENGTH(name)").each { |len| assert_instance_of Int, len }
     end
 
