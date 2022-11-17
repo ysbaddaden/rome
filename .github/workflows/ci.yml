@@ -29,7 +29,7 @@ jobs:
       - uses: oprypin/install-crystal@v1
       - run: timeout 60 sh -c 'until nc -z localhost 3306; do sleep 1; done'
       - run: shards install
-      - run: crystal run --no-debug $(find test -iname '*_test.cr')
+      - run: crystal run $(find test -iname '*_test.cr')
         env:
           DATABASE_URL: "mysql://root:secret@localhost/rome_test"
 
@@ -51,6 +51,20 @@ jobs:
       - uses: oprypin/install-crystal@v1
       - run: timeout 60 sh -c 'until nc -z localhost 5432; do sleep 1; done'
       - run: shards install
-      - run: crystal run --no-debug $(find test -iname '*_test.cr')
+      - run: crystal run $(find test -iname '*_test.cr')
         env:
           DATABASE_URL: "postgres://postgres:secret@localhost/rome_test"
+
+  test_sqlite3:
+    runs-on: ubuntu-20.04
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: oprypin/install-crystal@v1
+      - run: sudo apt install -qy libsqlite3-dev
+      - run: shards install
+      - run: crystal run $(find test -iname '*_test.cr')
+        env:
+          DATABASE_URL: "sqlite3://./rome_test.db"
+
