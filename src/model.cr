@@ -356,13 +356,13 @@ module Rome
       end
 
       # :nodoc:
-      def attributes=(args : NamedTuple) : Nil
+      def attributes=(attrs : NamedTuple) : Nil
         {% for key, opts in properties %}
-          if args.has_key?({{key.symbolize}})
+          if attrs.has_key?({{key.symbolize}})
             {% if opts[:null] %}
-              self.{{key}} = args[{{key.symbolize}}]?
+              self.{{key}} = attrs[{{key.symbolize}}]?
             {% else %}
-              self.{{key}} = args[{{key.symbolize}}]?.not_nil!
+              self.{{key}} = attrs[{{key.symbolize}}]?.not_nil!
             {% end %}
           end
         {% end %}
