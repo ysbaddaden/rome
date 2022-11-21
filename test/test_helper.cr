@@ -76,7 +76,7 @@ Rome.connection do |db|
     db.exec <<-SQL
     CREATE TABLE books (
       id SERIAL NOT NULL PRIMARY KEY,
-      author_id INT NOT NULL,
+      author_id INT,
       name VARCHAR NOT NULL
     );
     SQL
@@ -123,7 +123,7 @@ Rome.connection do |db|
     db.exec <<-SQL
     CREATE TABLE books (
       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      author_id INT NOT NULL,
+      author_id INT,
       name VARCHAR(50) NOT NULL
     );
     SQL
@@ -170,7 +170,7 @@ Rome.connection do |db|
     db.exec <<-SQL
     CREATE TABLE books (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      author_id INT NOT NULL,
+      author_id INT,
       name VARCHAR(50) NOT NULL
     );
     SQL
@@ -224,6 +224,16 @@ class Book < Rome::Model
   columns(
     id:        {type: Int32, primary_key: true},
     author_id: {type: Int32},
+    name:      {type: String},
+  )
+  belongs_to :author
+end
+
+class BookNilAuthor < Rome::Model
+  self.table_name = "books"
+  columns(
+    id:        {type: Int32, primary_key: true},
+    author_id: {type: Int32, null: true},
     name:      {type: String},
   )
   belongs_to :author
@@ -334,4 +344,31 @@ class AccountDependentDestroy < Rome::Model
     supplier_id: {type: Int32?},
   )
   belongs_to :supplier, dependent: :destroy
+end
+
+class AuthorDependentDestroy < Rome::Model
+  self.table_name = "authors"
+  columns(
+    id:   {type: Int32, primary_key: true},
+    name: {type: String},
+  )
+  has_many :books, foreign_key: "author_id", dependent: :destroy
+end
+
+class AuthorDependentDeleteAll < Rome::Model
+  self.table_name = "authors"
+  columns(
+    id:   {type: Int32, primary_key: true},
+    name: {type: String},
+  )
+  has_many :books, foreign_key: "author_id", dependent: :delete_all
+end
+
+class AuthorDependentNullify < Rome::Model
+  self.table_name = "authors"
+  columns(
+    id:   {type: Int32, primary_key: true},
+    name: {type: String},
+  )
+  has_many :books, class_name: BookNilAuthor, foreign_key: "author_id", dependent: :nullify
 end

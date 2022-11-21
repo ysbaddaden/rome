@@ -13,8 +13,8 @@ module Rome
 
     def build(**attributes) : T
       record = T.new(**attributes)
-      #record[@source] = @parent
       record[@foreign_key] = @parent.id?
+      # record[@source] = @parent
       (@cache ||= [] of T) << record
       record
     end
@@ -24,6 +24,16 @@ module Rome
       record.save
       record
     end
+
+    # def <<(record : T) : Nil
+    #   if @parent.persisted?
+    #     record.update_column(@foreign_key, @parent.id)
+    #   else
+    #     record[@foreign_key] = @parent.id?
+    #   end
+    #   record[@source] = @parent
+    #   @cache = nil
+    # end
 
     def delete(*records : T) : Nil
       ids = records.map(&.id)

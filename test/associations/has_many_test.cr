@@ -53,6 +53,9 @@ module Rome
       author.save
       assert author.persisted?
 
+      assert neverwhere.persisted?
+      assert_equal author.id, neverwhere.author_id
+
       coraline = author.books.create(name: "Corailne")
       coraline.name = "Coraline"
 
@@ -97,19 +100,55 @@ module Rome
     end
 
     def test_dependent_nil
-      skip
+      author = Author.create(name: "Neil")
+      coraline = author.books.create(name: "Coraline")
+      neverwhere = author.books.create(name: "Neverwhere")
+
+      author.destroy
+      assert_raises(RecordNotFound) { author.reload }
+      assert coraline.reload
+      assert neverwhere.reload
+
+      assert_equal 2, author.books.count
     end
 
     def test_dependent_destroy
-      skip
+      author = AuthorDependentDestroy.create(name: "Neil")
+      coraline = author.books.create(name: "Coraline")
+      neverwhere = author.books.create(name: "Neverwhere")
+
+      author.destroy
+      assert_raises(RecordNotFound) { author.reload }
+      assert_raises(RecordNotFound) { coraline.reload }
+      assert_raises(RecordNotFound) { neverwhere.reload }
+
+      assert_equal 0, author.books.count
     end
 
     def test_dependent_delete_all
-      skip
+      author = AuthorDependentDeleteAll.create(name: "Neil")
+      coraline = author.books.create(name: "Coraline")
+      neverwhere = author.books.create(name: "Neverwhere")
+
+      author.destroy
+      assert_raises(RecordNotFound) { author.reload }
+      assert_raises(RecordNotFound) { coraline.reload }
+      assert_raises(RecordNotFound) { neverwhere.reload }
+
+      assert_equal 0, author.books.count
     end
 
     def test_dependent_nullify
-      skip
+      author = AuthorDependentNullify.create(name: "Neil")
+      coraline = author.books.create(name: "Coraline")
+      neverwhere = author.books.create(name: "Neverwhere")
+
+      author.destroy
+      assert_raises(RecordNotFound) { author.reload }
+      assert_nil coraline.reload.author_id
+      assert_nil neverwhere.reload.author_id
+
+      assert_equal 0, author.books.count
     end
 
     def test_save_associations

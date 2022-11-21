@@ -172,6 +172,33 @@ module Rome
     end
 
     # Declares a has many relationship.
+    #
+    # This will add the following methods:
+    # - `associations` returns a `Relation(T)`;
+    # - `associations=` assigns the associated objects, assigning the
+    #   associations' foreign key, then saving the associations; permanently
+    #   deletes the previously associated objects;
+    #
+    # For example an Account class declares `has_many :sellers` which will add:
+    #
+    # - `Account#sellers`
+    # - `Account#sellers=(sellers)`
+    #
+    # Options
+    #
+    # - `class_name` overrides the association class name (inferred as
+    #   `name.singularize.camelcase` by default);
+    # - `foreign_key` overrides the foreign key for the association (inferred as
+    #   the name of this class + "_id" by default);
+    # - `autosave` can be either:
+    #   - `nil` (default) to only save newly built associations when the parent
+    #     record is saved,
+    #   - `true` to always save the associations (new or already persisted),
+    #   - `false` to never save the associations automatically.
+    # - `dependent` can be either:
+    #   - `:nullify` (default) to set the foreign key to `nil` in SQL,
+    #   - `:delete` to `delete` the associated records in SQL,
+    #   - `:destroy` to call `#destroy` on each associated objects.
     macro has_many(name, class_name = nil, foreign_key = nil, autosave = nil, dependent = nil)
       {% unless class_name
            class_name = name.id.stringify.gsub(/s$/, "").camelcase.id
