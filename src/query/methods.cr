@@ -3,13 +3,17 @@ require "./builder"
 module Rome
   module Query
     module Methods(T)
-      @builder : Builder
+      @builder : Builder?
+
+      private def builder
+        @builder.not_nil!
+      end
 
       abstract def dup(builder : Builder) # : self
 
       # Ensures that the query will never return anything from the database.
       def none : self
-        dup @builder.none
+        dup builder.none
       end
 
       # Query all records from the database. Doesn't actually issue any SQL query.
@@ -23,7 +27,7 @@ module Rome
         if cache = @cache
           cache.map(&.id)
         else
-          builder = @builder.unscope(:select)
+          builder = self.builder.unscope(:select)
           builder.select!(T.primary_key)
           Rome.adapter_class.new(builder).select_all { |rs| rs.read(T::PrimaryKeyType) }
         end
@@ -42,7 +46,7 @@ module Rome
 
       # Same as `#find` but returns `nil` when the record doesn't exist.
       def find?(id : T::PrimaryKeyType) : T?
-        builder = @builder.where({ T.primary_key => id }).limit(1)
+        builder = self.builder.where({ T.primary_key => id }).limit(1)
         Rome.adapter_class.new(builder).select_one { |rs| T.new(rs) }
       end
 
@@ -62,7 +66,7 @@ module Rome
       # Same as `#find_by` but returns `nil` when no record could be found in the
       # database.
       def find_by?(**args) : T?
-        builder = @builder.where(**args).limit(1)
+        builder = self.builder.where(**args).limit(1)
         Rome.adapter_class.new(builder).select_one { |rs| T.new(rs) }
       end
 
@@ -73,7 +77,7 @@ module Rome
       # # => SELECT 1 AS one FROM "users" WHERE "group_id" = 1 LIMIT 1;
       # ```
       def exists? : Bool
-        builder = @builder.unscope(:select, :order, :offset)
+        builder = self.builder.unscope(:select, :order, :offset)
           .select!("1 AS one")
           .limit!(1)
         Rome.adapter_class.new(builder).select_one { |rs| true } || false
@@ -87,7 +91,7 @@ module Rome
       # # => SELECT 1 AS one FROM "users" WHERE "group_id" = 1 AND "id" = 2 LIMIT 1;
       # ```
       def exists?(id : T::PrimaryKeyType) : Bool
-        builder = @builder.unscope(:select, :order, :offset)
+        builder = self.builder.unscope(:select, :order, :offset)
           .select!("1 AS one")
           .where!({ T.primary_key => id })
           .limit!(1)
@@ -111,7 +115,7 @@ module Rome
         if cache = @cache
           cache.first?
         else
-          builder = @builder.limit(1)
+          builder = self.builder.limit(1)
           Rome.adapter_class.new(builder).select_one { |rs|  T.new(rs) }
         end
       end
@@ -144,7 +148,7 @@ module Rome
         if cache = @cache
           cache.first?
         else
-          builder = @builder.limit(1)
+          builder = self.builder.limit(1)
           builder.order!({ T.primary_key => :asc }) unless builder.orders?
           Rome.adapter_class.new(builder).select_one { |rs| T.new(rs) }
         end
@@ -178,7 +182,7 @@ module Rome
         if cache = @cache
           cache.last?
         else
-          builder = @builder.limit(1)
+          builder = self.builder.limit(1)
           if orders = builder.orders?
             builder.unscope!(:order)
             orders.each do |order|
@@ -207,7 +211,7 @@ module Rome
       # # => ["julien", "alice", ...]
       # ```
       def pluck(column_name : Symbol | String) : Array(Value)
-        builder = @builder.unscope(:select)
+        builder = self.builder.unscope(:select)
         builder.select!(column_name)
         Rome.adapter_class.new(builder).select_all { |rs| rs.read(Value) }
       end
@@ -234,7 +238,7 @@ module Rome
       # ```
       # User.count("LENGTH(name)")
       # ```
-      def count(column_name : Symbol | String = "*", distinct = @builder.distinct?) : Int64
+      def count(column_name : Symbol | String = "*", distinct = builder.distinct?) : Int64
         calculate("COUNT", column_name, distinct).as(Int).to_i64
       end
 
@@ -284,7 +288,7 @@ module Rome
         calculate("MAX", column_name)
       end
 
-      protected def calculate(function, column_name, distinct = @builder.distinct?)
+      protected def calculate(function, column_name, distinct = builder.distinct?)
         selects = String.build do |str|
           str << function
           str << '('
@@ -297,9 +301,18 @@ module Rome
           end
           str << ')'
         end
-        builder = @builder.unscope(:select)
+        builder = self.builder.unscope(:select)
         builder.select!(selects)
         Rome.adapter_class.new(builder).scalar
+      end
+
+      # Executes an UPDATE SQL query.
+      # ```
+      # User.where(id: 1).update_all({ group_id: 2 })
+      # # => UPDATE "users" SET "group_id" = 2 WHERE "id" = 1;
+      # ```
+      def update_all(attributes : Hash | NamedTuple) : Nil
+        Rome.adapter_class.new(builder).update(attributes)
       end
 
       # Executes an UPDATE SQL query.
@@ -307,8 +320,8 @@ module Rome
       # User.where(id: 1).update_all(group_id: 2)
       # # => UPDATE "users" SET "group_id" = 2 WHERE "id" = 1;
       # ```
-      def update_all(attributes : Hash | NamedTuple) : Nil
-        Rome.adapter_class.new(@builder).update(attributes)
+      def update_all(**attributes) : Nil
+        update_all(attributes)
       end
 
       # Executes a DELETE SQL query.
@@ -317,39 +330,39 @@ module Rome
       # # => DELETE FROM "users" WHERE "group_id" = 1;
       # ```
       def delete_all : Nil
-        Rome.adapter_class.new(@builder).delete
+        Rome.adapter_class.new(builder).delete
       end
 
       # Specify SELECT columns for the query.
       def select(*columns : Symbol) : self
-        dup @builder.select(*columns)
+        dup builder.select(*columns)
       end
 
       # :nodoc:
       def select!(*columns : Symbol) : self
-        @builder.select!(*columns)
+        builder.select!(*columns)
         self
       end
 
       # Specify a raw SELECT statement for the query.
       def select(sql : String) : self
-        dup @builder.select(sql)
+        dup builder.select(sql)
       end
 
       # :nodoc:
       def select!(sql : String) : self
-        @builder.select!(sql)
+        builder.select!(sql)
         self
       end
 
       # Specify a DISTINCT statement for the query.
       def distinct(value = true) : self
-        dup @builder.distinct(value)
+        dup builder.distinct(value)
       end
 
       # :nodoc:
       def distinct!(value = true) : self
-        @builder.distinct!(value)
+        builder.distinct!(value)
       end
 
       # Specify WHERE conditions for the query. For example:
@@ -374,12 +387,12 @@ module Rome
       # # => SELECT * FROM "users" WHERE "group_id" IN (1, 2, 3);
       # ```
       def where(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
-        dup @builder.where(conditions)
+        dup builder.where(conditions)
       end
 
       # :nodoc:
       def where!(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
-        @builder.where!(conditions)
+        builder.where!(conditions)
         self
       end
 
@@ -401,32 +414,32 @@ module Rome
       # # => SELECT * FROM "users" WHERE "group_id" IN (1, 2, 3);
       # ```
       def where(**conditions) : self
-        dup @builder.where(**conditions)
+        dup builder.where(**conditions)
       end
 
       # :nodoc:
       def where!(**conditions) : self
-        @builder.where!(**conditions)
+        builder.where!(**conditions)
         self
       end
 
       def where_not(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
-        dup @builder.where_not(conditions)
+        dup builder.where_not(conditions)
       end
 
       # :nodoc:
       def where_not!(conditions : Hash(Symbol, Value | Array(Value)) | NamedTuple) : self
-        @builder.where_not!(conditions)
+        builder.where_not!(conditions)
         self
       end
 
       def where_not(**conditions) : self
-        dup @builder.where_not(**conditions)
+        dup builder.where_not(**conditions)
       end
 
       # :nodoc:
       def where_not!(**conditions) : self
-        @builder.where_not!(**conditions)
+        builder.where_not!(**conditions)
         self
       end
 
@@ -438,34 +451,34 @@ module Rome
       # # => SELECT * FROM "users" WHERE LENGTH(name) > 10;
       # ```
       def where(sql : String, *args : Value) : self
-        dup @builder.where(sql, *args)
+        dup builder.where(sql, *args)
       end
 
       # :nodoc:
       def where!(sql : String, *args : Value) : self
-        @builder.where!(sql, *args)
+        builder.where!(sql, *args)
         self
       end
 
       # Specify a LIMIT for the query.
       def limit(value : Int32) : self
-        dup @builder.limit(value)
+        dup builder.limit(value)
       end
 
       # :nodoc:
       def limit!(value : Int32) : self
-        @builder.limit!(value)
+        builder.limit!(value)
         self
       end
 
       # Specify an OFFSET for the query.
       def offset(value : Int32) : self
-        dup @builder.offset(value)
+        dup builder.offset(value)
       end
 
       # :nodoc:
       def offset!(value : Int32) : self
-        @builder.offset!(value)
+        builder.offset!(value)
         self
       end
 
@@ -476,12 +489,12 @@ module Rome
       # # => SELECT * FROM "users" ORDER BY "name" ASC, "group_id" DESC;
       # ```
       def order(columns : Hash(Symbol, Symbol)) : self
-        dup @builder.order(columns)
+        dup builder.order(columns)
       end
 
       # :nodoc:
       def order!(columns : Hash(Symbol, Symbol)) : self
-        @builder.order!(columns)
+        builder.order!(columns)
         self
       end
 
@@ -492,12 +505,12 @@ module Rome
       # # => SELECT * FROM "users" ORDER BY "name" ASC;
       # ```
       def order(*columns : Symbol | String) : self
-        dup @builder.order(*columns)
+        dup builder.order(*columns)
       end
 
       # :nodoc:
       def order!(*columns : Symbol | String) : self
-        @builder.order!(*columns)
+        builder.order!(*columns)
         self
       end
 
@@ -508,48 +521,48 @@ module Rome
       # # => SELECT * FROM "users" ORDER BY "name" ASC, "group_id" DESC;
       # ```
       def order(**columns) : self
-        dup @builder.order(**columns)
+        dup builder.order(**columns)
       end
 
       # :nodoc:
       def order!(**columns) : self
-        @builder.order!(**columns)
+        builder.order!(**columns)
         self
       end
 
       # Specify an ORDER for the query, replacing any previous ORDER definition.
       # See `#order` for details.
       def reorder(columns : Hash(Symbol, Symbol)) : self
-        dup @builder.reorder(columns)
+        dup builder.reorder(columns)
       end
 
       # :nodoc:
       def reorder!(columns : Hash(Symbol, Symbol)) : self
-        @builder.reorder!(columns)
+        builder.reorder!(columns)
         self
       end
 
       # Specify an ORDER column for the query, replacing any previous ORDER
       # definition. See `#order` for details.
       def reorder(*columns : Symbol | String) : self
-        dup @builder.reorder(*columns)
+        dup builder.reorder(*columns)
       end
 
       # :nodoc:
       def reorder!(*columns : Symbol | String) : self
-        @builder.reorder!(*columns)
+        builder.reorder!(*columns)
         self
       end
 
       # Specify an ORDER for the query, replacing any previous ORDER definition.
       # See `#order` for details.
       def reorder(**columns) : self
-        dup @builder.reorder(**columns)
+        dup builder.reorder(**columns)
       end
 
       # :nodoc:
       def reorder!(**columns) : self
-        @builder.reorder!(**columns)
+        builder.reorder!(**columns)
         self
       end
 
@@ -569,18 +582,18 @@ module Rome
       # - `:limit`
       # - `:offset`
       def unscope(*args) : self
-        dup @builder.unscope(*args)
+        dup builder.unscope(*args)
       end
 
       # :nodoc:
       def unscope!(*args) : self
-        @builder.unscope!(*args)
+        builder.unscope!(*args)
         self
       end
 
       # Returns the generated SQL query. Useful for debugging.
       def to_sql : String
-        Rome.adapter_class.new(@builder).to_sql
+        Rome.adapter_class.new(builder).to_sql
       end
     end
   end

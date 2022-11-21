@@ -33,9 +33,13 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: secret
       MYSQL_DATABASE: rome_test
+    ports:
+      - "3306:3306"
 
   postgresql:
     image: postgres:11-alpine
     environment:
       POSTGRES_DB: rome_test
       POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
